@@ -1,0 +1,7 @@
+/static/*
+conf.toml
+/horizon.log
+/bin/
+build.sh
+# Project exclude paths
+/docs/img/
