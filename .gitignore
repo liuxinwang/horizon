@@ -4,4 +4,3 @@ conf.toml
 /bin/
 build.sh
 # Project exclude paths
-/docs/img/

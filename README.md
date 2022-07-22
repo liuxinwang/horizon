@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="static/logo.png" style="height: 30%; width: 30%" />
+    <img src="docs/img/logo.png" style="height: 30%; width: 30%" />
 </p>
 
 # Horizon MySQL稳定平台
