@@ -6,8 +6,12 @@
 
 ![LICENSE](https://img.shields.io/badge/license-GPLv2%20-blue.svg)
 ![](https://img.shields.io/github/languages/top/liuxinwang/horizon)
-![](https://img.shields.io/badge/build-prerelease-brightgreen.svg)  
-![](https://img.shields.io/badge/version-v0.1.0-brightgreen.svg)
+![](https://img.shields.io/badge/build-prerelease-brightgreen.svg)
+![](https://img.shields.io/badge/version-v0.2.0-brightgreen.svg)
+
+### 在线体验
+
+[horizon](http://sqlpub.com:8082/)
 
 ### Depend on 依赖项
 
