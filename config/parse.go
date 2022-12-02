@@ -33,7 +33,7 @@ type Config struct {
 var Conf Config
 
 func InitConfig() {
-	if _, err := toml.DecodeFile("./conf.toml", &Conf); err != nil {
+	if _, err := toml.DecodeFile("conf.toml", &Conf); err != nil {
 		panic("ERROR occurred:" + err.Error())
 	}
 	fmt.Printf("%s (%s)\n", Conf.Mysql.User, Conf.Mysql.Password)

@@ -52,6 +52,15 @@ func InstanceSelectByList(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": data, "err": ""})
 }
 
+// InstanceSelectByInstId 查看实例信息
+func InstanceSelectByInstId(c *gin.Context) {
+	var Db = model.Db
+	var instance model.Instance
+	// 执行查询
+	Db.Where("inst_id = ?", c.Param("instId")).Find(&instance)
+	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": &instance, "err": ""})
+}
+
 // InstanceInsert 新增实例
 func InstanceInsert(c *gin.Context) {
 	// 参数映射到对象

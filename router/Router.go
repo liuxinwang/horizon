@@ -62,6 +62,7 @@ func commonRouter(r *gin.Engine) {
 	// instance group
 	instance := api.Group("/instance", authMiddleware.MiddlewareFunc())
 	instance.GET("", handler.InstanceGet)
+	instance.GET("/:instId", handler.InstanceInstIdGet)
 	instance.POST("", handler.InstancePost)
 	instance.PUT("", handler.InstancePut)
 	instance.DELETE("/:id", handler.InstanceDelete)
@@ -70,4 +71,8 @@ func commonRouter(r *gin.Engine) {
 	inspection := api.Group("/inspection", authMiddleware.MiddlewareFunc())
 	inspection.GET("", handler.InspectionGet)
 	inspection.GET("/:id", handler.InspectionDetailGet)
+
+	// score group
+	score := api.Group("/score", authMiddleware.MiddlewareFunc())
+	score.GET("", handler.ScoreGet)
 }

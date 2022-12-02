@@ -23,7 +23,12 @@
     - 巡检
       - 列表查询
       - 定时任务采集
-      - TODO 评分计算
+      - 查看巡检报告
+      - 评分计算
+- TODO SQL审核
+  - SQL查询
+  - SQL上线
+  - SQL优化
 
 ### Install 安装及使用
 - 下载最新的releases https://github.com/liuxinwang/horizon/releases
@@ -54,3 +59,8 @@ E-mail: sqlpub@foxmail.com
 -   Inspection
 
 ![](docs/img/inspection.png)
+
+-   Inspection-detail
+
+![](docs/img/inspection-detail.png)
+![](docs/img/inspection-detail2.png)

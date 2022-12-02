@@ -9,6 +9,10 @@ func InstanceGet(c *gin.Context) {
 	service.InstanceSelectByList(c)
 }
 
+func InstanceInstIdGet(c *gin.Context) {
+	service.InstanceSelectByInstId(c)
+}
+
 func InstancePost(c *gin.Context) {
 	service.InstanceInsert(c)
 }

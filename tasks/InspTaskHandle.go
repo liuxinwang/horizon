@@ -47,34 +47,51 @@ func InspTaskRunning(instId string) {
 			score.ScoreCPU(metric, result)
 		case model.MemoryUtilization:
 			result, _ = promApi.MetricMemory()
+			availableResult, _ := promApi.MetricMemoryAvailable()
+			score.ScoreMemory(metric, result, availableResult)
 		case model.SwapUse:
 			result, _ = promApi.MetricSwap()
+			score.ScoreSwap(metric, result)
 		case model.DiskUtilization:
 			result, _ = promApi.MetricDisk()
+			resultAvailable, _ := promApi.MetricDiskAvailable()
+			resultGrowth, _ := promApi.MetricDisk7DayAverageDailyGrowth()
+			score.ScoreDisk(metric, resultAvailable, resultGrowth)
 		case model.IOPSUtilization:
 			result, _ = promApi.MetricIOPS()
+			score.ScoreIOPS(metric, result)
 		case model.Deadlock:
 			result, _ = promApi.MetricDeadlock()
+			score.ScoreDeadlock(metric, result)
 		case model.SlowSQLNum:
 			result, _ = promApi.MetricSlowSQLNum()
+			slowTotalNum := promApi.MetricSlowSQLTotalNum()
+			score.ScoreSlowSQLNum(metric, slowTotalNum)
 		case model.IncrementIdOverflow:
 			result, _ = promApi.MetricIncrementIdOverflow()
+			score.ScoreIncrementIdOverflow(metric, result)
 		case model.LockWait:
 			result, _ = promApi.MetricLockWait()
+			score.ScoreLockWait(metric, result)
 		case model.BigTableNum:
 			result, _ = promApi.MetricBigTableNum()
+			score.ScoreBigTableNum(metric, result)
 		case model.ThreadsRunningNum:
 			result, _ = promApi.MetricThreadsRunningNum()
+			score.ScoreThreadsRunningNum(metric, result)
 		case model.ThreadsConnected:
 			result, _ = promApi.MetricThreadsConnected()
+			score.ScoreThreadsConnected(metric, result)
 		case model.IBPCacheHitsRate:
 			result, _ = promApi.MetricIBPCacheHitsRate()
+			score.ScoreIBPCacheHitsRate(metric, result)
 		case model.QPS:
 			result, _ = promApi.MetricQPS()
 		case model.TPS:
 			result, _ = promApi.MetricTPS()
 		case model.HighRiskAccount:
 			result, _ = promApi.MetricHighRiskAccount()
+			score.ScoreHighRiskAccount(metric, result)
 		case model.HAStatus:
 			// result, _ = promApi.MetricHAStatus()
 			continue
@@ -99,6 +116,8 @@ func InspTaskRunning(instId string) {
 		// 单指标评分
 	}
 	// 计算总评分
+	model.Db.Model(&inspection).Update("score", totalScore(inspection.InspId))
+
 	// 评健康等级
 }
 

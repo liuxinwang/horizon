@@ -28,6 +28,30 @@ type MysqlUserResult struct {
 	Host string
 }
 
+type MysqlTablesResult struct {
+	TableCatalog   string    `gorm:"column:TABLE_CATALOG"`
+	TableSchema    string    `gorm:"column:TABLE_SCHEMA"`
+	TableName      string    `gorm:"column:TABLE_NAME"`
+	TableType      string    `gorm:"column:TABLE_TYPE"`
+	Engine         string    `gorm:"column:ENGINE"`
+	Version        int       `gorm:"column:VERSION"`
+	RowFormat      string    `gorm:"column:ROW_FORMAT"`
+	TableRows      int64     `gorm:"column:TABLE_ROWS"`
+	AvgRowLength   int64     `gorm:"column:AVG_ROW_LENGTH"`
+	DataLength     int64     `gorm:"column:DATA_LENGTH"`
+	MaxDataLength  int64     `gorm:"column:MAX_DATA_LENGTH"`
+	IndexLength    int64     `gorm:"column:INDEX_LENGTH"`
+	DataFree       int64     `gorm:"column:DATA_FREE"`
+	AutoIncrement  int64     `gorm:"column:AUTO_INCREMENT"`
+	CreateTime     time.Time `gorm:"column:CREATE_TIME"`
+	UpdateTime     time.Time `gorm:"column:UPDATE_TIME"`
+	CheckTime      time.Time `gorm:"column:CHECK_TIME"`
+	TableCollation string    `gorm:"column:TABLE_COLLATION"`
+	Checksum       int64     `gorm:"column:CHECKSUM"`
+	CreateOptions  string    `gorm:"column:CREATE_OPTIONS"`
+	TableComment   string    `gorm:"column:TABLE_COMMENT"`
+}
+
 func PromAPI() v1.API {
 	address := fmt.Sprintf("http://%s:%d", config.Conf.Prometheus.Host, config.Conf.Prometheus.Port)
 	client, err := api.NewClient(api.Config{
@@ -45,6 +69,14 @@ func (p *Prom) MetricQuery(query string) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	result, _, err := p.Api.Query(ctx, query, time.Now())
+	resultByte, _ := json.Marshal(result)
+	return resultByte, err
+}
+
+func (p *Prom) MetricQueryTs(query string, ts time.Time) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	result, _, err := p.Api.Query(ctx, query, ts)
 	resultByte, _ := json.Marshal(result)
 	return resultByte, err
 }
@@ -75,6 +107,13 @@ func (p *Prom) MetricMemory() ([]byte, error) {
 	return p.MetricQueryRange(query)
 }
 
+func (p *Prom) MetricMemoryAvailable() ([]byte, error) {
+	query := fmt.Sprintf("node_memory_MemAvailable_bytes{instance=~'%s'}"+
+		" or (node_memory_Buffers_bytes{instance=~'%s'} + node_memory_Cached_bytes{instance=~'%s'} + node_memory_MemFree_bytes{instance=~'%s'})",
+		p.NodeExporterInst, p.NodeExporterInst, p.NodeExporterInst, p.NodeExporterInst)
+	return p.MetricQueryRange(query)
+}
+
 func (p *Prom) MetricSwap() ([]byte, error) {
 	query := fmt.Sprintf("(node_memory_SwapTotal_bytes{instance=~'%s'} - node_memory_SwapFree_bytes{instance=~'%s'}) / 1024 / 1024",
 		p.NodeExporterInst, p.NodeExporterInst)
@@ -82,10 +121,20 @@ func (p *Prom) MetricSwap() ([]byte, error) {
 }
 
 func (p *Prom) MetricDisk() ([]byte, error) {
-	query := fmt.Sprintf("100 - ((node_filesystem_avail_bytes{instance=~'%s',mountpoint='/',fstype=~'ext4|xfs'} * 100)"+
-		" / node_filesystem_size_bytes{instance=~'%s',mountpoint='/',fstype=~'ext4|xfs'})",
+	query := fmt.Sprintf("(1 - node_filesystem_avail_bytes{instance=~'%s',mountpoint='/',fstype=~'ext4|xfs'}"+
+		" / node_filesystem_size_bytes{instance=~'%s',mountpoint='/',fstype=~'ext4|xfs'}) * 100",
 		p.NodeExporterInst, p.NodeExporterInst)
 	return p.MetricQueryRange(query)
+}
+
+func (p *Prom) MetricDiskAvailable() ([]byte, error) {
+	query := fmt.Sprintf("node_filesystem_avail_bytes{instance=~'%s',mountpoint='/',fstype=~'ext4|xfs'}", p.NodeExporterInst)
+	return p.MetricQuery(query)
+}
+
+func (p *Prom) MetricDisk7DayAverageDailyGrowth() ([]byte, error) {
+	query := fmt.Sprintf("delta(node_filesystem_avail_bytes{instance=~'%s',mountpoint='/',fstype=~'ext4|xfs'}[7d])/7", p.NodeExporterInst)
+	return p.MetricQuery(query)
 }
 
 func (p *Prom) MetricIOPS() ([]byte, error) {
@@ -108,11 +157,22 @@ func (p *Prom) MetricSlowSQLNum() ([]byte, error) {
 	return p.MetricQueryRange(query)
 }
 
+func (p *Prom) MetricSlowSQLTotalNum() int {
+	query := fmt.Sprintf("mysql_global_status_slow_queries{instance='%s'}",
+		p.MySQLExporterInst)
+	startTimeValue, _ := p.MetricQueryTs(query, p.StartTime)
+	startTimeSlowNum := json.Get(startTimeValue, 0).Get("value", 1).ToInt()
+	endTimeValue, _ := p.MetricQueryTs(query, p.EndTime)
+	endTimeSlowNum := json.Get(endTimeValue, 0).Get("value", 1).ToInt()
+	totalNum := endTimeSlowNum - startTimeSlowNum
+	return totalNum
+}
+
 func (p *Prom) MetricIncrementIdOverflow() ([]byte, error) {
 	query := fmt.Sprintf("(1-mysql_info_schema_auto_increment_column{instance='%s',schema!~'test|mysql'} / "+
 		"mysql_info_schema_auto_increment_column_max{instance='%s',schema!~'test|mysql'})*100 < 20",
 		p.MySQLExporterInst, p.MySQLExporterInst)
-	return p.MetricQueryRange(query)
+	return p.MetricQuery(query)
 }
 
 func (p *Prom) MetricLockWait() ([]byte, error) {
@@ -122,9 +182,15 @@ func (p *Prom) MetricLockWait() ([]byte, error) {
 }
 
 func (p *Prom) MetricBigTableNum() ([]byte, error) {
-	query := fmt.Sprintf("increase(mysql_global_status_innodb_row_lock_current_waits{instance='%s'}[1m])",
-		p.MySQLExporterInst)
-	return p.MetricQueryRange(query)
+	dsn := "%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local&timeout=3s"
+	dsn = fmt.Sprintf(dsn, p.Instance.User, DecryptAES([]byte(config.Conf.General.SecretKey), p.Instance.Password), p.Instance.Ip, p.Instance.Port, "information_schema")
+	db, _ := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	var mysqlTablesResult []MysqlTablesResult
+	result := db.Table("tables").Where(
+		"table_schema not in ('performance_schema') " +
+			"and (TABLE_ROWS > 10000000 or (DATA_LENGTH + INDEX_LENGTH)/1024/1024/1024 > 10)").Find(&mysqlTablesResult)
+	resultJson, _ := json.Marshal(mysqlTablesResult)
+	return resultJson, result.Error
 }
 
 func (p *Prom) MetricThreadsRunningNum() ([]byte, error) {
@@ -177,7 +243,6 @@ func (p *Prom) MetricHighRiskAccount() ([]byte, error) {
 	var mysqlUsersResult []MysqlUserResult
 	result := db.Table("user").Select("user", "host").Where(
 		"host = '%' OR authentication_string IN ?", weakPasswordList).Find(&mysqlUsersResult)
-	fmt.Printf(string(result.RowsAffected))
 	resultJson, _ := json.Marshal(mysqlUsersResult)
 	return resultJson, result.Error
 }
