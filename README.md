@@ -1,5 +1,5 @@
-<p align="center">
-    <img src="docs/img/logo.png" style="height: 30%; width: 30%" />
+<p style="text-align: center">
+    <img src="docs/img/logo.png" style="height: 30%; width: 30%"  alt="logo"/>
 </p>
 
 # Horizon MySQL稳定平台
@@ -7,7 +7,7 @@
 ![LICENSE](https://img.shields.io/badge/license-GPLv2%20-blue.svg)
 ![](https://img.shields.io/github/languages/top/liuxinwang/horizon)
 ![](https://img.shields.io/badge/build-prerelease-brightgreen.svg)
-![](https://img.shields.io/badge/version-v0.2.0-brightgreen.svg)
+[![Release](https://img.shields.io/github/release/liuxinwang/horizon.svg?style=flat-square)](https://github.com/liuxinwang/horizon/releases)
 
 ### 在线体验
 
@@ -20,15 +20,30 @@
 ### Feature 功能
 - 实例管理
     - 列表
-    - 巡检
-      - 列表查询
-      - 定时任务采集
-      - 查看巡检报告
-      - 评分计算
+- 巡检报告
+  - 列表查询
+  - 定时任务采集
+  - 查看巡检报告
+  - 评分计算
+  - TODO 评分等级
+- TODO 诊断优化
+  - 异常诊断
+  - 实例会话
+  - 慢查分析
+  - 空间分析
+  - 审计日志
 - TODO SQL审核
   - SQL查询
   - SQL上线
-  - SQL优化
+  - 数据导出
+  - 安全规则
+  - 审批流程
+  - 操作审计
+- TODO 数据传输
+- TODO 数据库备份
+- TODO 系统管理
+  - 用户管理
+  - 角色管理
 
 ### Install 安装及使用
 - 下载最新的releases https://github.com/liuxinwang/horizon/releases

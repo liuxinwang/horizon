@@ -18,6 +18,11 @@ type Result struct {
 	Total int8
 }
 
+type HealthLevel struct {
+	level     string
+	levelName string
+}
+
 func (s *Score) ScoreCPU(metric model.Metric, result []byte) {
 	// result预处理
 	summary := resultSummary(result)
@@ -330,7 +335,22 @@ func (s *Score) ScoreHighRiskAccount(metric model.Metric, result []byte) {
 	// TODO 生成异常代办
 }
 
-func totalScore(inspId string) int8 {
+func calculateScoreLevel(totalScore int8) string {
+	var level string
+	switch {
+	case totalScore < 60:
+		level = "CRITICAL"
+	case totalScore < 80:
+		level = "RISKY"
+	case totalScore < 95:
+		level = "SUBOPTIMAL"
+	default:
+		level = "HEALTHY"
+	}
+	return level
+}
+
+func calculateTotalScore(inspId string) int8 {
 	var result Result
 	model.Db.Model(&Score{}).Select("100 - sum(deduction) as total").Where("insp_id = ?", inspId).Find(&result)
 	return result.Total

@@ -113,12 +113,13 @@ func InspTaskRunning(instId string) {
 		model.Db.Create(&model.InspDetail{
 			InspId: inspection.InspId, Metric: metric.Key, Result: result,
 		})
-		// 单指标评分
 	}
 	// 计算总评分
-	model.Db.Model(&inspection).Update("score", totalScore(inspection.InspId))
-
+	totalScore := calculateTotalScore(inspection.InspId)
+	model.Db.Model(&inspection).Update("score", totalScore)
 	// 评健康等级
+	healthLevel := calculateScoreLevel(totalScore)
+	model.Db.Model(&inspection).Update("level", healthLevel)
 }
 
 // 初始化巡检记录
