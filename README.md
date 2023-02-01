@@ -25,7 +25,7 @@
   - 定时任务采集
   - 查看巡检报告
   - 评分计算
-  - TODO 评分等级
+  - 评分等级
 - TODO 诊断优化
   - 异常诊断
   - 实例会话
@@ -77,5 +77,5 @@ E-mail: sqlpub@foxmail.com
 
 -   Inspection-detail
 
-![](docs/img/inspection-detail.png)
-![](docs/img/inspection-detail2.png)
+![](docs/img/inspection-detail.jpg)
+![](docs/img/inspection-detail2.jpg)
