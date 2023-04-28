@@ -24,7 +24,7 @@ func InstanceSelectByList(c *gin.Context) {
 	var Db = model.Db
 	var instances []model.Instance
 	var totalCount int64
-	data := gin.H{"total": 0, "data": &[]model.Instance{}, "pageNo": pageNo, "pageSize": pageSize, "totalPage": 0}
+	data := gin.H{"totalCount": 0, "data": &[]model.Instance{}, "pageNo": pageNo, "pageSize": pageSize, "totalPage": 0}
 
 	// 查询条件处理
 	if instId, isExist := c.GetQuery("InstId"); isExist == true && strings.Trim(instId, " ") != "" {
@@ -65,12 +65,14 @@ func InstanceSelectByInstId(c *gin.Context) {
 func InstanceInsert(c *gin.Context) {
 	// 参数映射到对象
 	var instance model.Instance
-	c.ShouldBind(&instance)
+	if err := c.ShouldBind(&instance); err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
+		return
+	}
 	// 加密密码
 	instance.Password = encryptPassword(instance.Password)
 	// 获取状态
-	_, err := getStatus(&instance)
-	if err != nil {
+	if _, err := getStatus(&instance); err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
 		return
 	} else {
@@ -89,7 +91,10 @@ func InstanceInsert(c *gin.Context) {
 func InstanceUpdate(c *gin.Context) {
 	// 参数映射到对象
 	var instance model.Instance
-	c.ShouldBind(&instance)
+	if err := c.ShouldBind(&instance); err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
+		return
+	}
 	// 密码处理
 	var instance2 model.Instance
 	model.Db.Select("password").Where("inst_id = ?", instance.InstId).First(&instance2)
@@ -97,8 +102,7 @@ func InstanceUpdate(c *gin.Context) {
 		// 加密密码
 		instance.Password = encryptPassword(instance.Password)
 		// 验证状态
-		_, err := getStatus(&instance)
-		if err != nil {
+		if _, err := getStatus(&instance); err != nil {
 			c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
 			return
 		} else {

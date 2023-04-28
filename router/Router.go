@@ -56,8 +56,23 @@ func commonRouter(r *gin.Engine) {
 	auth.POST("/logout", authMiddleware.LogoutHandler)
 
 	// user group
-	user := api.Group("/user")
-	user.GET("/info", authMiddleware.MiddlewareFunc(), handler.GetUser)
+	user := api.Group("/user", authMiddleware.MiddlewareFunc())
+	user.GET("/info", handler.GetUser)
+	user.GET("/nav", handler.GetUserNav)
+	user.GET("", handler.GetUserList)
+	user.PUT("", handler.PutUser)
+	user.PUT("resetPassword", handler.PutResetPassword)
+
+	// role group
+	role := api.Group("/role", authMiddleware.MiddlewareFunc())
+	role.GET("", handler.RoleGet)
+	role.POST("", handler.RolePost)
+	role.PUT("", handler.RolePut)
+	role.DELETE("/:id", handler.RoleDelete)
+
+	// menu group
+	menu := api.Group("/menu", authMiddleware.MiddlewareFunc())
+	menu.GET("", handler.MenuGet)
 
 	// instance group
 	instance := api.Group("/instance", authMiddleware.MiddlewareFunc())

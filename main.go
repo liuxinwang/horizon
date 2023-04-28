@@ -33,10 +33,11 @@ func main() {
 		sub, _ := fs.Sub(Static, "static")
 		r.StaticFS("/static", http.FS(sub))
 		// load index.html template
-		template := template.Must(template.New("").ParseFS(Static, "static/*.html"))
-		r.SetHTMLTemplate(template)
+		staticTemplate := template.Must(template.New("").ParseFS(Static, "static/*.html"))
+		r.SetHTMLTemplate(staticTemplate)
 	}
 	tasks.InitTasks()
 	log.Printf(fmt.Sprintf("start horizon in :%d", config.Conf.General.Port))
-	r.Run(fmt.Sprintf(":%d", config.Conf.General.Port))
+	err := r.Run(fmt.Sprintf(":%d", config.Conf.General.Port))
+	log.Fatal(err.Error())
 }

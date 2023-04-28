@@ -17,7 +17,7 @@ func InspectionSelectByList(c *gin.Context) {
 	var Db = model.Db
 	var inspections []model.Inspection
 	var totalCount int64
-	data := gin.H{"total": 0, "data": &[]model.Inspection{}, "pageNo": pageNo, "pageSize": pageSize, "totalPage": 0}
+	data := gin.H{"totalCount": 0, "data": &[]model.Inspection{}, "pageNo": pageNo, "pageSize": pageSize, "totalPage": 0}
 
 	// 查询条件处理
 	if instId, isExist := c.GetQuery("InstId"); isExist == true && strings.Trim(instId, " ") != "" {
