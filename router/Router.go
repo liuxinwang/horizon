@@ -69,6 +69,7 @@ func commonRouter(r *gin.Engine) {
 	role.POST("", handler.RolePost)
 	role.PUT("", handler.RolePut)
 	role.DELETE("/:id", handler.RoleDelete)
+	role.POST("permission", handler.RolePermissionPost)
 
 	// menu group
 	menu := api.Group("/menu", authMiddleware.MiddlewareFunc())

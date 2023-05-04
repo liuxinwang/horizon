@@ -5,6 +5,6 @@ import (
 	"horizon/service"
 )
 
-func RolePermissionGet(c *gin.Context) {
-	service.RolePermissionSelectByList(c)
+func RolePermissionPost(c *gin.Context) {
+	service.RolePermissionInsert(c)
 }
