@@ -79,3 +79,9 @@ E-mail: sqlpub@foxmail.com
 
 ![](docs/img/inspection-detail.jpg)
 ![](docs/img/inspection-detail2.jpg)
+
+
+致谢
+===============
+- [JetBrains Open Source](https://jb.gg/OpenSourceSupport) 为项目提供免费的 IDE 授权  
+  [<img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png" width="200"/>](https://jb.gg/OpenSourceSupport)
