@@ -14,9 +14,9 @@ INSERT INTO `metrics` (`key`,`name`,`unit`,`created_at`,`updated_at`) VALUES ('B
 INSERT INTO `metrics` (`key`,`name`,`unit`,`created_at`,`updated_at`) VALUES ('BIGTABLE_NUM','大表数量','个',now(),now());
 INSERT INTO `metrics` (`key`,`name`,`unit`,`created_at`,`updated_at`) VALUES ('CPU_UTILIZATION','CPU使用率','%',now(),now());
 INSERT INTO `metrics` (`key`,`name`,`unit`,`created_at`,`updated_at`) VALUES ('DEADLOCK','死锁','次',now(),now());
-INSERT INTO `metrics` (`key`,`name`,`unit`,`created_at`,`updated_at`) VALUES ('DISK_UTILIZATION','磁盘使用率',now(),now());
+INSERT INTO `metrics` (`key`,`name`,`unit`,`created_at`,`updated_at`) VALUES ('DISK_UTILIZATION','磁盘使用率','%',now(),now());
 INSERT INTO `metrics` (`key`,`name`,`unit`,`created_at`,`updated_at`) VALUES ('HA_STATUS','HA状态','开/关',now(),now());
-INSERT INTO `metrics` (`key`,`name`,`unit`,`created_at`,`updated_at`) VALUES ('HIGH_RISK_ACCOUNT','高危账号',now(),now());
+INSERT INTO `metrics` (`key`,`name`,`unit`,`created_at`,`updated_at`) VALUES ('HIGH_RISK_ACCOUNT','高危账号', '个', now(),now());
 INSERT INTO `metrics` (`key`,`name`,`unit`,`created_at`,`updated_at`) VALUES ('IBP_CACHE_HITS_RATE','缓存命中率','%',now(),now());
 INSERT INTO `metrics` (`key`,`name`,`unit`,`created_at`,`updated_at`) VALUES ('INCREMENT_ID_OVERFLOW','自增主键溢出','个',now(),now());
 INSERT INTO `metrics` (`key`,`name`,`unit`,`created_at`,`updated_at`) VALUES ('IOPS_UTILIZATION','IOPS使用率','%',now(),now());
