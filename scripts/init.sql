@@ -3,10 +3,12 @@
 CREATE DATABASE `horizon` DEFAULT CHARACTER SET utf8mb4;
 USE horizon;
 -- insert admin user
-INSERT INTO users(id, user_name, `nick_name`, `password`, `role`, `status`, created_at, updated_at)
-VALUES('1', 'admin', '管理员', '$2a$10$kfcWYvoUMzY7BtQw/IrMd.aVilOs6.b/xbt560dqR467qz28TpL8K', 'admin', 'Enabled', NOW(), NOW());
+INSERT INTO users(id, user_name, `nick_name`, `password`, `status`, created_at, updated_at)
+VALUES('1', 'admin', '管理员', '$2a$10$kfcWYvoUMzY7BtQw/IrMd.aVilOs6.b/xbt560dqR467qz28TpL8K', 'Enabled', NOW(), NOW());
 -- insert role
-INSERT INTO `roles`(`key`, `name`)VALUES('admin', '系统管理员');
+INSERT INTO `roles`(`id`, `name`, `describe`)VALUES('admin', '系统管理员', '');
+-- insert admin user role
+INSERT INTO `user_roles`(`user_id`, `role_id`)VALUES('1', 'admin');
 -- insert inspection metrics
 INSERT INTO `metrics` (`key`,`name`,`unit`,`created_at`,`updated_at`) VALUES ('BACKUP_STATUS','备份状态','正常/异常',now(),now());
 INSERT INTO `metrics` (`key`,`name`,`unit`,`created_at`,`updated_at`) VALUES ('BIGTABLE_NUM','大表数量','个',now(),now());
