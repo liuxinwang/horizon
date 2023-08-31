@@ -7,7 +7,7 @@ import (
 
 type Menu struct {
 	ID             uint             `gorm:"primaryKey;comment:主键ID" json:"id"`
-	Name           string           `gorm:"type:varchar(20);not null;comment:名称" json:"name"`
+	Name           string           `gorm:"type:varchar(50);not null;comment:名称" json:"name"`
 	ParentId       uint             `gorm:"comment:上级ID" json:"parentId"`
 	Meta           datatypes.JSON   `gorm:"type:json;not null;comment:元信息" json:"meta"`
 	Component      string           `gorm:"type:varchar(50);not null;comment:组件" json:"component"`

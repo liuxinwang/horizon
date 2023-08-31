@@ -91,4 +91,23 @@ func commonRouter(r *gin.Engine) {
 	// score group
 	score := api.Group("/score", authMiddleware.MiddlewareFunc())
 	score.GET("", handler.ScoreGet)
+
+	// sql audit group
+	sqlAudit := api.Group("/sqlaudit", authMiddleware.MiddlewareFunc())
+	// project group
+	project := sqlAudit.Group("/project", authMiddleware.MiddlewareFunc())
+	project.GET("", handler.ProjectGet)
+	project.GET("/:projId", handler.ProjectProjIdGet)
+	project.POST("", handler.ProjectPost)
+	project.PUT("", handler.ProjectPut)
+	project.DELETE("/:id", handler.ProjectDelete)
+	project.POST("resource/config", handler.ProjectResourceConfigPost)
+	project.GET("role", handler.ProjectRoleGet)
+	// workflow group
+	workflow := sqlAudit.Group("/workflow", authMiddleware.MiddlewareFunc())
+	workflow.GET("", handler.WorkflowGet)
+	workflow.GET("/:projId", handler.WorkflowProjIdGet)
+	workflow.POST("", handler.WorkflowPost)
+	workflow.PUT("", handler.WorkflowPut)
+	workflow.DELETE("/:id", handler.WorkflowDelete)
 }

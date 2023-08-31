@@ -27,7 +27,13 @@ func InitDb() {
 		&Role{},
 		&Menu{},
 		&UserRole{},
-		&RolePermission{})
+		&RolePermission{},
+		&Project{},
+		&ProjectRole{},
+		&ProjectDatasource{},
+		&ProjectUser{},
+		&RuleTemplate{},
+		&Workflow{})
 	if err != nil {
 		log.Fatal(err.Error())
 	}
