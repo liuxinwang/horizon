@@ -3,7 +3,6 @@ package service
 import (
 	"github.com/gin-gonic/gin"
 	"horizon/model"
-	"horizon/utils"
 	"math"
 	"net/http"
 	"strconv"
@@ -57,8 +56,8 @@ func WorkflowInsert(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
 		return
 	}
-	// 获取ID
-	workflow.ProjId = utils.GenerateId(&workflow)
+	userInfo, _ := c.Keys["UserName"]
+	workflow.UserName = userInfo.(*model.User).UserName
 	result := model.Db.Create(&workflow)
 	if result.Error != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error})
@@ -76,7 +75,7 @@ func WorkflowUpdate(c *gin.Context) {
 	}
 	// 执行更新
 	updMap := map[string]interface{}{"name": workflow.Name, "describe": workflow.Describe}
-	model.Db.Model(model.Workflow{}).Where("proj_id = ?", workflow.ProjId).Updates(updMap)
+	model.Db.Model(model.Workflow{}).Where("id = ?", workflow.ID).Updates(updMap)
 	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": "", "err": ""})
 }
 

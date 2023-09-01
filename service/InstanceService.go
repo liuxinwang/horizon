@@ -128,6 +128,14 @@ func InstanceDelete(c *gin.Context) {
 	}
 }
 
+// InstanceDbSelectByInstId 查询列表
+func InstanceDbSelectByInstId(c *gin.Context) {
+	var instance model.Instance
+	model.Db.Where("inst_id = ?", c.Param("instId")).First(&instance)
+	databases := getDatabases(&instance)
+	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": &databases, "err": ""})
+}
+
 // 获取实例状态
 func getStatus(instance *model.Instance) (*gorm.DB, error) {
 	dsn := "%s:%s@tcp(%s:%d)/information_schema?charset=utf8mb4&parseTime=True&loc=Local&timeout=1s"
@@ -168,4 +176,22 @@ func getVersion(instance *model.Instance) {
 func encryptPassword(password string) string {
 	// bcryptPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return utils.EncryptAES([]byte(config.Conf.General.SecretKey), password)
+}
+
+// 获取实例数据库
+func getDatabases(instance *model.Instance) interface{} {
+	dsn := "%s:%s@tcp(%s:%d)/information_schema?charset=utf8mb4&parseTime=True&loc=Local&timeout=1s"
+	dsn = fmt.Sprintf(dsn, instance.User, utils.DecryptAES([]byte(config.Conf.General.SecretKey), instance.Password), instance.Ip, instance.Port)
+	Db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		panic("ERROR occurred:" + err.Error())
+	}
+	type result struct {
+		Name string `json:"name"`
+	}
+	var results []result
+	Db.Raw("SELECT SCHEMA_NAME as name " +
+		"FROM SCHEMATA " +
+		"WHERE SCHEMA_NAME NOT IN ('information_schema', 'mysql', 'performance_schema' , '')").Scan(&results)
+	return results
 }

@@ -24,3 +24,7 @@ func InstancePut(c *gin.Context) {
 func InstanceDelete(c *gin.Context) {
 	service.InstanceDelete(c)
 }
+
+func InstanceDdGet(c *gin.Context) {
+	service.InstanceDbSelectByInstId(c)
+}

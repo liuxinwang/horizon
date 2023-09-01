@@ -59,6 +59,7 @@ func JWTAuthMiddleware() *jwt.GinJWTMiddleware {
 			return &user, nil
 		},
 		// 给定用户身份值（data参数）和 gin 上下文，此函数应检查用户是否有权到达此端点
+		// 后端鉴权
 		Authorizator: func(data interface{}, c *gin.Context) bool {
 			if v, ok := data.(*model.User); ok && v.UserName == "admin" {
 				return true

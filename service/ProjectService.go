@@ -169,3 +169,31 @@ func ProjectRoleSelectByList(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": data, "err": ""})
 }
+
+// ProjectUserSelectByUserName 查询列表
+func ProjectUserSelectByUserName(c *gin.Context) {
+	type result struct {
+		ProjId string `json:"projId"`
+		Name   string `json:"name"`
+	}
+	var results []result
+	// 执行查询
+	model.Db.Select("projects.*").Model(&model.ProjectUser{}).
+		Joins("inner join projects on project_users.proj_id = projects.proj_id").
+		Where("user_name = ?", c.Param("userName")).Scan(&results)
+	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": &results, "err": ""})
+}
+
+// ProjectDataSourceSelectByProjId 查询列表
+func ProjectDataSourceSelectByProjId(c *gin.Context) {
+	type result struct {
+		InstId string `json:"instId"`
+		Name   string `json:"name"`
+	}
+	var results []result
+	// 执行查询
+	model.Db.Debug().Select("instances.*").Model(&model.ProjectDatasource{}).
+		Joins("inner join instances on project_datasources.inst_id = instances.inst_id").
+		Where("proj_id = ?", c.Param("projId")).Scan(&results)
+	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": &results, "err": ""})
+}

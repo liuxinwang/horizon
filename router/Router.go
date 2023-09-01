@@ -82,6 +82,7 @@ func commonRouter(r *gin.Engine) {
 	instance.POST("", handler.InstancePost)
 	instance.PUT("", handler.InstancePut)
 	instance.DELETE("/:id", handler.InstanceDelete)
+	instance.GET("db/:instId", handler.InstanceDdGet)
 
 	// inspection group
 	inspection := api.Group("/inspection", authMiddleware.MiddlewareFunc())
@@ -103,6 +104,9 @@ func commonRouter(r *gin.Engine) {
 	project.DELETE("/:id", handler.ProjectDelete)
 	project.POST("resource/config", handler.ProjectResourceConfigPost)
 	project.GET("role", handler.ProjectRoleGet)
+	project.GET("user/:userName", handler.ProjectUserNameGet)
+	project.GET("datasource/:projId", handler.ProjectDataSourceGet)
+
 	// workflow group
 	workflow := sqlAudit.Group("/workflow", authMiddleware.MiddlewareFunc())
 	workflow.GET("", handler.WorkflowGet)

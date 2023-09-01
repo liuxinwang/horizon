@@ -32,3 +32,11 @@ func ProjectResourceConfigPost(c *gin.Context) {
 func ProjectRoleGet(c *gin.Context) {
 	service.ProjectRoleSelectByList(c)
 }
+
+func ProjectUserNameGet(c *gin.Context) {
+	service.ProjectUserSelectByUserName(c)
+}
+
+func ProjectDataSourceGet(c *gin.Context) {
+	service.ProjectDataSourceSelectByProjId(c)
+}
