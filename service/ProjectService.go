@@ -106,6 +106,10 @@ func ProjectResourceConfigInsert(c *gin.Context) {
 		return
 	}
 	tx := model.Db.Begin()
+	// update project workflow template
+	tx.Model(&model.Project{}).
+		Where("proj_id = ?", permBody.ProjId).
+		UpdateColumn("workflow_template_code", permBody.WorkflowTemplateCode)
 	// first delete and add ProjectDatasources
 	result := tx.Where("proj_id = ?", permBody.Project.ProjId).Delete(&model.ProjectDatasource{})
 	if result.Error != nil {

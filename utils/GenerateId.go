@@ -1,8 +1,10 @@
 package utils
 
 import (
+	"fmt"
 	"horizon/model"
 	"math/rand"
+	"strings"
 	"time"
 )
 
@@ -13,13 +15,13 @@ func GenerateId(obj interface{}) string {
 	for i := range b {
 		b[i] = letterRunes[rand.New(rand.NewSource(time.Now().UnixNano())).Intn(len(letterRunes))]
 	}
-	var obj_id = ""
-	switch obj.(type) {
+	var objId = ""
+	switch objValue := obj.(type) {
 	case *model.Instance:
-		obj_id = "mysql-" + string(b)
+		objId = fmt.Sprintf("%s-%s", strings.ToLower(string(objValue.Type)), string(b))
 	case *model.Project:
-		obj_id = "proj-" + string(b)
+		objId = "proj-" + string(b)
 	}
-	return obj_id
+	return objId
 
 }

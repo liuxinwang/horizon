@@ -1,5 +1,6 @@
 /static/*
 conf.toml
+conf_local.toml
 /horizon.log
 /bin/
 build.sh

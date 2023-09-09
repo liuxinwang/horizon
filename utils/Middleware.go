@@ -64,6 +64,9 @@ func JWTAuthMiddleware() *jwt.GinJWTMiddleware {
 			if v, ok := data.(*model.User); ok && v.UserName == "admin" {
 				return true
 			}
+			if _, ok := data.(*model.User); ok {
+				return true
+			}
 			return false
 		},
 		// 在登录、授权用户出现任何错误，或者请求中没有令牌的情况或情况下，将发生以下情况

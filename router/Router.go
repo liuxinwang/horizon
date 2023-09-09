@@ -110,8 +110,20 @@ func commonRouter(r *gin.Engine) {
 	// workflow group
 	workflow := sqlAudit.Group("/workflow", authMiddleware.MiddlewareFunc())
 	workflow.GET("", handler.WorkflowGet)
-	workflow.GET("/:projId", handler.WorkflowProjIdGet)
+	workflow.GET("/:id", handler.WorkflowIdGet)
 	workflow.POST("", handler.WorkflowPost)
 	workflow.PUT("", handler.WorkflowPut)
 	workflow.DELETE("/:id", handler.WorkflowDelete)
+	workflow.GET("progress/:id", handler.WorkflowIdProgressGet)
+	workflow.POST("audit", handler.WorkflowAuditPost)
+	workflow.POST("cancel", handler.WorkflowCancelPost)
+	workflow.POST("execute", handler.WorkflowExecutePost)
+
+	// workflowTemplate group
+	workflowTemplate := sqlAudit.Group("/workflowTemplate", authMiddleware.MiddlewareFunc())
+	workflowTemplate.GET("", handler.WorkflowTemplateGet)
+	workflowTemplate.POST("", handler.WorkflowTemplatePost)
+	workflowTemplate.PUT("", handler.WorkflowTemplatePut)
+	workflowTemplate.DELETE("/:id", handler.WorkflowTemplateDelete)
+	workflowTemplate.POST("/config", handler.WorkflowTemplateConfigPost)
 }

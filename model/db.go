@@ -14,7 +14,7 @@ func InitDb() {
 	dbConf := config.Conf.Mysql
 	dsn := "%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local&timeout=3s"
 	dsn = fmt.Sprintf(dsn, dbConf.User, dbConf.Password, dbConf.Host, dbConf.Port, dbConf.Db)
-	Db, _ = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	Db, _ = gorm.Open(mysql.Open(dsn), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: false})
 	err := Db.AutoMigrate(
 		&User{},
 		&Instance{},
@@ -33,7 +33,10 @@ func InitDb() {
 		&ProjectDatasource{},
 		&ProjectUser{},
 		&RuleTemplate{},
-		&Workflow{})
+		&Workflow{},
+		&WorkflowTemplate{},
+		&WorkflowTemplateDetail{},
+		&WorkflowRecord{})
 	if err != nil {
 		log.Fatal(err.Error())
 	}

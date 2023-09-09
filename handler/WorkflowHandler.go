@@ -9,8 +9,8 @@ func WorkflowGet(c *gin.Context) {
 	service.WorkflowSelectByList(c)
 }
 
-func WorkflowProjIdGet(c *gin.Context) {
-	service.WorkflowSelectByInstId(c)
+func WorkflowIdGet(c *gin.Context) {
+	service.WorkflowSelectById(c)
 }
 
 func WorkflowPost(c *gin.Context) {
@@ -23,4 +23,20 @@ func WorkflowPut(c *gin.Context) {
 
 func WorkflowDelete(c *gin.Context) {
 	service.WorkflowDelete(c)
+}
+
+func WorkflowIdProgressGet(c *gin.Context) {
+	service.WorkflowProgressSelectById(c)
+}
+
+func WorkflowAuditPost(c *gin.Context) {
+	service.WorkflowAuditUpdate(c)
+}
+
+func WorkflowCancelPost(c *gin.Context) {
+	service.WorkflowCancelUpdate(c)
+}
+
+func WorkflowExecutePost(c *gin.Context) {
+	service.WorkflowExecuteUpdate(c)
 }

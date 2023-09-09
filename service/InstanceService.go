@@ -79,7 +79,8 @@ func InstanceInsert(c *gin.Context) {
 		getVersion(&instance)
 	}
 	// 获取实例ID
-	generateId(&instance)
+	instId := utils.GenerateId(&instance)
+	instance.InstId = instId
 	result := model.Db.Create(&instance)
 	if result.Error != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error})
