@@ -3,10 +3,16 @@ package model
 import "time"
 
 type InstType string
+type EnvType string
 
 const (
 	MySQLType InstType = "MySQL"
 	DorisType InstType = "Doris"
+
+	DevEnvType  EnvType = "dev"
+	TestEnvType EnvType = "test"
+	PreEnvType  EnvType = "pre"
+	ProdEnvType EnvType = "prod"
 )
 
 type Instance struct {
@@ -14,6 +20,7 @@ type Instance struct {
 	InstId             string              `gorm:"type:varchar(20);uniqueIndex:uniq_inst_id;not null;comment:实例ID" json:"instId"`
 	Name               string              `gorm:"type:varchar(50);not null;comment:实例名称" json:"name"`
 	Type               InstType            `gorm:"type:varchar(20);default:'MySQL';not null;comment:实例类型" json:"type"`
+	EnvType            EnvType             `gorm:"type:varchar(20);default:'dev';not null;comment:环境类型" json:"envType"`
 	Role               string              `gorm:"type:enum('Master', 'Slave');default:'Master';not null;comment:实例角色" json:"role"`
 	Ip                 string              `gorm:"type:varchar(20);not null;comment:实例IP" json:"ip"`
 	Port               uint16              `gorm:"not null;comment:实例端口" json:"port"`
