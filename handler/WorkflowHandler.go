@@ -40,3 +40,7 @@ func WorkflowCancelPost(c *gin.Context) {
 func WorkflowExecutePost(c *gin.Context) {
 	service.WorkflowExecuteUpdate(c)
 }
+
+func WorkflowIdSqlDetailGet(c *gin.Context) {
+	service.WorkflowSqlDetailSelectById(c)
+}

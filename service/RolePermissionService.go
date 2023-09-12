@@ -47,8 +47,8 @@ func RolePermissionInsert(c *gin.Context) {
 		}
 	}
 
-	model.Db.Debug().Delete(&model.RolePermission{}, "role_id = ?", permBody.Role.ID)
-	result := model.Db.Debug().Create(&rolePermissions)
+	model.Db.Delete(&model.RolePermission{}, "role_id = ?", permBody.Role.ID)
+	result := model.Db.Create(&rolePermissions)
 	if result.Error != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error.Error()})
 	} else {

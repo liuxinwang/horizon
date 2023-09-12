@@ -4,10 +4,14 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/pingcap/tidb/parser"
+	"github.com/pingcap/tidb/parser/ast"
+	_ "github.com/pingcap/tidb/types/parser_driver"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"horizon/config"
 	"horizon/model"
+	"horizon/plugins"
 	"horizon/utils"
 	"math"
 	"net/http"
@@ -49,14 +53,14 @@ func WorkflowSelectByList(c *gin.Context) {
 	// 用户还可以查询参与审核的工单
 
 	// 执行查询
-	Db = Db.Debug().Preload("WorkflowRecords", func(db *gorm.DB) *gorm.DB {
+	Db = Db.Preload("WorkflowRecords", func(db *gorm.DB) *gorm.DB {
 		return db.Order("id asc")
 	})
-	Db = Db.Debug().Select("workflows.*, instances.name as inst_name").Joins("left join instances on workflows.inst_id = instances.inst_id").Where(
+	Db = Db.Select("workflows.*, instances.name as inst_name").Joins("left join instances on workflows.inst_id = instances.inst_id").Where(
 		"(user_name = ?", userName).
 		Or("workflows.id in (?))", model.Db.Table("workflow_records").Where("assignee_user_name = ?", userName).Select("workflow_id")).
 		Order("created_at desc").Limit(pageSize).Offset((pageNo-1)*pageSize - 1).Find(&workflows)
-	Db.Debug().Model(&model.Workflow{}).Count(&totalCount)
+	Db.Model(&model.Workflow{}).Count(&totalCount)
 
 	// 处理结果集并返回
 	totalPage := math.Ceil(float64(totalCount) / float64(pageSize))
@@ -86,12 +90,77 @@ func WorkflowInsert(c *gin.Context) {
 	userInfo, _ := c.Keys["UserName"]
 	workflow.UserName = userInfo.(*model.User).UserName
 	tx := model.Db.Begin()
+
+	var instance model.Instance
+	tx.Where("inst_id = ?", workflow.InstId).First(&instance)
+
+	// insert workflow
 	result := tx.Create(&workflow)
 	if result.Error != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error})
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error.Error()})
 		tx.Rollback()
 		return
 	}
+
+	switch instance.Type {
+	case model.MySQLType:
+		// parser sql
+		p := parser.New()
+		stmtNodes, _, err := p.Parse(workflow.SqlContent, "", "")
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
+			tx.Rollback()
+			return
+		}
+		for _, node := range stmtNodes {
+			println(node.Text())
+			switch node.(type) {
+			case *ast.InsertStmt:
+			case *ast.UpdateStmt:
+			case *ast.DeleteStmt:
+			case *ast.AlterTableStmt:
+			case *ast.CreateTableStmt:
+			case *ast.CreateIndexStmt:
+			default:
+				c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": fmt.Sprintf("不支持的SQL语句：%v", node.Text())})
+				tx.Rollback()
+				return
+			}
+		}
+	case model.DorisType:
+		var dp plugins.DorisPlugin
+		result, err := dp.Audit(workflow.SqlContent)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
+			tx.Rollback()
+			return
+		}
+		for i, auditResult := range result {
+			var workflowSqlDetail model.WorkflowSqlDetail
+			workflowSqlDetail.WorkflowId = workflow.ID
+			workflowSqlDetail.SerialNumber = uint(i + 1)
+			workflowSqlDetail.Statement = auditResult.Statement
+			workflowSqlDetail.AuditStatus = auditResult.AuditStatus
+			workflowSqlDetail.AuditLevel = auditResult.AuditLevel
+			workflowSqlDetail.AuditMsg = auditResult.AuditMsg
+			createRs := tx.Create(&workflowSqlDetail)
+			if createRs.Error != nil {
+				c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
+				tx.Rollback()
+				return
+			}
+			if auditResult.AuditStatus != model.WorkflowSqlAuditStatusPassed {
+				c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": workflowSqlDetail.AuditMsg})
+				tx.Rollback()
+				return
+			}
+		}
+	default:
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": "不支持的数据库类型：" + instance.Type})
+		tx.Rollback()
+		return
+	}
+
 	// insert WorkflowRecord
 	var workflowRecord model.WorkflowRecord
 	workflowRecord.WorkflowId = workflow.ID
@@ -113,7 +182,7 @@ func WorkflowInsert(c *gin.Context) {
 	result = tx.Create(&workflowRecord)
 	tx.Commit()
 	if result.Error != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error})
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error.Error()})
 		tx.Rollback()
 		return
 	} else {
@@ -198,7 +267,7 @@ func WorkflowAuditUpdate(c *gin.Context) {
 	switch workflowRecord.AuditStatus {
 	case model.FlowAuditStatusPassed:
 		var workflowTemplateDetail model.WorkflowTemplateDetail
-		tx.Debug().Where("workflow_template_code = ? and  serial_number > ?", workflowRecord.WorkflowTemplateCode, workflowRecord.FlowSerialNumber).
+		tx.Where("workflow_template_code = ? and  serial_number > ?", workflowRecord.WorkflowTemplateCode, workflowRecord.FlowSerialNumber).
 			Order("serial_number asc").First(&workflowTemplateDetail)
 		if workflowTemplateDetail.ID > 0 {
 			// 不是最后一个
@@ -340,4 +409,29 @@ func executeSQL(instance *model.Instance, db string, sql string) error {
 		return result.Error
 	}
 	return nil
+}
+
+// WorkflowSqlDetailSelectById 查询工单sql审核明细
+func WorkflowSqlDetailSelectById(c *gin.Context) {
+	// 变量初始化
+	pageNo, _ := strconv.Atoi(c.Query("pageNo"))
+	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
+	workflowId, _ := strconv.Atoi(c.Query("workflowId"))
+	var workflowSqlDetails []model.WorkflowSqlDetail
+	var totalCount int64
+	data := gin.H{"totalCount": 0, "data": &[]model.WorkflowSqlDetail{}, "pageNo": pageNo, "pageSize": pageSize, "totalPage": 0}
+	var Db = model.Db
+	result := Db.Where("workflow_id = ?", workflowId).Find(&workflowSqlDetails)
+	if result.Error != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error.Error()})
+		return
+	}
+	Db.Model(&model.WorkflowSqlDetail{}).Where("workflow_id = ?", workflowId).Count(&totalCount)
+	// 处理结果集并返回
+	totalPage := math.Ceil(float64(totalCount) / float64(pageSize))
+	if totalCount > 0 {
+		data = gin.H{"totalCount": totalCount, "data": &workflowSqlDetails, "pageNo": pageNo, "pageSize": pageSize, "totalPage": totalPage}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": data, "err": ""})
 }

@@ -7,6 +7,8 @@ import (
 
 type workflowAuditStatus string
 type workflowStatus string
+type WorkflowSqlAuditStatus string
+type WorkflowSqlAuditLevel string
 
 const (
 	WorkflowStatusPendingAudit     workflowStatus = "PendingAudit"
@@ -20,6 +22,13 @@ const (
 	FlowAuditStatusPendingAudit  workflowAuditStatus = "PendingAudit"
 	FlowAuditStatusPassed        workflowAuditStatus = "Passed"
 	FlowAuditStatusAuditRejected workflowAuditStatus = "Rejected"
+
+	WorkflowSqlAuditStatusPassed WorkflowSqlAuditStatus = "Passed"
+	WorkflowSqlAuditStatusFailed WorkflowSqlAuditStatus = "Failed"
+
+	WorkflowSqlAuditLevelWarning WorkflowSqlAuditLevel = "Warning"
+	WorkflowSqlAuditLevelError   WorkflowSqlAuditLevel = "Error"
+	WorkflowSqlAuditLevelSuccess WorkflowSqlAuditLevel = "Success"
 )
 
 type Workflow struct {
@@ -71,4 +80,16 @@ type WorkflowRecord struct {
 	IsAudit              uint                `gorm:"not null;default:0;comment:审核标识（0：未审核，1：已审核）" json:"isAudit"`
 	CreatedAt            time.Time           `gorm:"type:datetime;not null;default:current_timestamp;comment:创建时间" json:"createdAt"`
 	UpdatedAt            time.Time           `gorm:"type:datetime;not null;default:current_timestamp on update current_timestamp;comment:修改时间" json:"updatedAt"`
+}
+
+type WorkflowSqlDetail struct {
+	ID           uint                   `gorm:"primaryKey;comment:主键ID" json:"id"`
+	WorkflowId   uint                   `gorm:"not null;comment:工单ID" json:"workflowId"`
+	SerialNumber uint                   `gorm:"not null;comment:工单语句序号" json:"serialNumber"`
+	Statement    string                 `gorm:"type:text;not null;comment:工单语句" json:"statement"`
+	AuditStatus  WorkflowSqlAuditStatus `gorm:"type:varchar(20);not null;comment:审核状态" json:"auditStatus"`
+	AuditLevel   WorkflowSqlAuditLevel  `gorm:"type:varchar(20);not null;comment:审核等级" json:"auditLevel"`
+	AuditMsg     string                 `gorm:"type:varchar(1000);not null;comment:审核信息" json:"auditMsg"`
+	CreatedAt    time.Time              `gorm:"type:datetime;not null;default:current_timestamp;comment:创建时间" json:"createdAt"`
+	UpdatedAt    time.Time              `gorm:"type:datetime;not null;default:current_timestamp on update current_timestamp;comment:修改时间" json:"updatedAt"`
 }

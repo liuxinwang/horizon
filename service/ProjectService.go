@@ -196,7 +196,7 @@ func ProjectDataSourceSelectByProjId(c *gin.Context) {
 	}
 	var results []result
 	// 执行查询
-	model.Db.Debug().Select("instances.*").Model(&model.ProjectDatasource{}).
+	model.Db.Select("instances.*").Model(&model.ProjectDatasource{}).
 		Joins("inner join instances on project_datasources.inst_id = instances.inst_id").
 		Where("proj_id = ?", c.Param("projId")).Scan(&results)
 	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": &results, "err": ""})
