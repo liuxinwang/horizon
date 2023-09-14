@@ -2,6 +2,10 @@ package model
 
 import (
 	"database/sql"
+	"fmt"
+	json "github.com/json-iterator/go"
+	"gorm.io/gorm"
+	"horizon/notification"
 	"time"
 )
 
@@ -9,6 +13,7 @@ type workflowAuditStatus string
 type workflowStatus string
 type WorkflowSqlAuditStatus string
 type WorkflowSqlAuditLevel string
+type WorkflowSqlExecutionStatus string
 
 const (
 	WorkflowStatusPendingAudit     workflowStatus = "PendingAudit"
@@ -29,6 +34,9 @@ const (
 	WorkflowSqlAuditLevelWarning WorkflowSqlAuditLevel = "Warning"
 	WorkflowSqlAuditLevelError   WorkflowSqlAuditLevel = "Error"
 	WorkflowSqlAuditLevelSuccess WorkflowSqlAuditLevel = "Success"
+
+	WorkflowSqlExecutionStatusFailed       WorkflowSqlExecutionStatus = "Failed"
+	WorkflowSqlExecutionStatusSuccessfully WorkflowSqlExecutionStatus = "Successfully"
 )
 
 type Workflow struct {
@@ -80,16 +88,120 @@ type WorkflowRecord struct {
 	IsAudit              uint                `gorm:"not null;default:0;comment:审核标识（0：未审核，1：已审核）" json:"isAudit"`
 	CreatedAt            time.Time           `gorm:"type:datetime;not null;default:current_timestamp;comment:创建时间" json:"createdAt"`
 	UpdatedAt            time.Time           `gorm:"type:datetime;not null;default:current_timestamp on update current_timestamp;comment:修改时间" json:"updatedAt"`
+	User                 User                `gorm:"foreignKey:AssigneeUserName;references:UserName" json:"user"`
 }
 
 type WorkflowSqlDetail struct {
-	ID           uint                   `gorm:"primaryKey;comment:主键ID" json:"id"`
-	WorkflowId   uint                   `gorm:"not null;comment:工单ID" json:"workflowId"`
-	SerialNumber uint                   `gorm:"not null;comment:工单语句序号" json:"serialNumber"`
-	Statement    string                 `gorm:"type:text;not null;comment:工单语句" json:"statement"`
-	AuditStatus  WorkflowSqlAuditStatus `gorm:"type:varchar(20);not null;comment:审核状态" json:"auditStatus"`
-	AuditLevel   WorkflowSqlAuditLevel  `gorm:"type:varchar(20);not null;comment:审核等级" json:"auditLevel"`
-	AuditMsg     string                 `gorm:"type:varchar(1000);not null;comment:审核信息" json:"auditMsg"`
-	CreatedAt    time.Time              `gorm:"type:datetime;not null;default:current_timestamp;comment:创建时间" json:"createdAt"`
-	UpdatedAt    time.Time              `gorm:"type:datetime;not null;default:current_timestamp on update current_timestamp;comment:修改时间" json:"updatedAt"`
+	ID              uint                       `gorm:"primaryKey;comment:主键ID" json:"id"`
+	WorkflowId      uint                       `gorm:"not null;comment:工单ID" json:"workflowId"`
+	SerialNumber    uint                       `gorm:"not null;comment:工单语句序号" json:"serialNumber"`
+	Statement       string                     `gorm:"type:text;not null;comment:工单语句" json:"statement"`
+	AuditStatus     WorkflowSqlAuditStatus     `gorm:"type:varchar(20);not null;comment:审核状态" json:"auditStatus"`
+	AuditLevel      WorkflowSqlAuditLevel      `gorm:"type:varchar(20);not null;comment:审核等级" json:"auditLevel"`
+	AuditMsg        string                     `gorm:"type:varchar(1000);not null;comment:审核信息" json:"auditMsg"`
+	ExecutionStatus WorkflowSqlExecutionStatus `gorm:"type:varchar(20);not null;comment:执行状态" json:"executionStatus"`
+	ExecutionMsg    string                     `gorm:"type:varchar(1000);not null;comment:执行信息" json:"executionMsg"`
+	CreatedAt       time.Time                  `gorm:"type:datetime;not null;default:current_timestamp;comment:创建时间" json:"createdAt"`
+	UpdatedAt       time.Time                  `gorm:"type:datetime;not null;default:current_timestamp on update current_timestamp;comment:修改时间" json:"updatedAt"`
+}
+
+func (w *Workflow) AfterUpdate(tx *gorm.DB) (err error) {
+	var workflowUser User
+	result := tx.Where("user_name = ?", w.UserName).First(&workflowUser)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if w.Status == WorkflowStatusPendingExecution {
+		markdown := notification.DingContentMarkdown{
+			Title: "SQL工单通知",
+			Text: fmt.Sprintf(
+				"用户：@%s 提交的 SQL工单【%s】，已审核通过。[工单详情](http://localhost:8000/sqlaudit/workflowDetail/%d)",
+				workflowUser.Phone, w.Name, w.ID),
+		}
+		at := notification.DingContentAt{
+			AtMobiles: []string{workflowUser.Phone},
+			AtUserIds: []string{},
+			IsAtAll:   false,
+		}
+		content := notification.DingContent{
+			MsgType:         "markdown",
+			ContentMarkdown: markdown,
+			ContentAt:       at,
+		}
+		marshal, err := json.Marshal(content)
+		if err != nil {
+			return err
+		}
+		notification.SendDingDing(string(marshal))
+	}
+	if w.Status == WorkflowStatusRejected {
+		markdown := notification.DingContentMarkdown{
+			Title: "SQL工单通知",
+			Text: fmt.Sprintf(
+				"用户：@%s 提交的 SQL工单【%s】，被驳回！[工单详情](http://localhost:8000/sqlaudit/workflowDetail/%d)",
+				workflowUser.Phone, w.Name, w.ID),
+		}
+		at := notification.DingContentAt{
+			AtMobiles: []string{workflowUser.Phone},
+			AtUserIds: []string{},
+			IsAtAll:   false,
+		}
+		content := notification.DingContent{
+			MsgType:         "markdown",
+			ContentMarkdown: markdown,
+			ContentAt:       at,
+		}
+		marshal, err := json.Marshal(content)
+		if err != nil {
+			return err
+		}
+		notification.SendDingDing(string(marshal))
+	}
+	return
+}
+
+func (wr *WorkflowRecord) AfterCreate(tx *gorm.DB) (err error) {
+	var workflow Workflow
+	result := tx.Where("id = ?", wr.WorkflowId).First(&workflow)
+	if result.Error != nil {
+		return result.Error
+	}
+	var workflowUser User
+	result = tx.Where("user_name = ?", workflow.UserName).First(&workflowUser)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	var workflowAssigneeUser User
+	result = tx.Where("user_name = ?", wr.AssigneeUserName).First(&workflowAssigneeUser)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if wr.AuditStatus == FlowAuditStatusPendingAudit {
+		markdown := notification.DingContentMarkdown{
+			Title: "SQL工单通知",
+			Text: fmt.Sprintf(
+				"用户：%s 提交的 SQL工单【%s】，正在等待 @%s 审批，请确认！[审核](http://localhost:8000/sqlaudit/workflowDetail/%d)",
+				workflowUser.NickName, workflow.Name,
+				workflowAssigneeUser.Phone, wr.WorkflowId),
+		}
+		at := notification.DingContentAt{
+			AtMobiles: []string{workflowAssigneeUser.Phone},
+			AtUserIds: []string{},
+			IsAtAll:   false,
+		}
+		content := notification.DingContent{
+			MsgType:         "markdown",
+			ContentMarkdown: markdown,
+			ContentAt:       at,
+		}
+		marshal, err := json.Marshal(content)
+		if err != nil {
+			return err
+		}
+		notification.SendDingDing(string(marshal))
+	}
+	return nil
 }

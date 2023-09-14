@@ -38,12 +38,34 @@ func RolePermissionInsert(c *gin.Context) {
 				})
 			}
 			// 添加选择的节点
+			parentIds[permission.ID] = permission.ID
 			rolePermissions = append(rolePermissions, model.RolePermission{
 				RoleId:     permBody.Role.ID,
 				MenuId:     permission.ID,
 				ActionData: permission.SelectedData,
 				ActionList: permission.Selected,
 			})
+			/*
+				// 添加选择的子节点
+				rows, err := model.Db.Model(&model.Menu{}).Where("parent_id = ?", permission.ID).Rows()
+				defer rows.Close()
+				if err != nil {
+					c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
+				}
+				for rows.Next() {
+					var menu model.Menu
+					// ScanRows 方法用于将一行记录扫描至结构体
+					model.Db.ScanRows(rows, &menu)
+					// 业务逻辑...
+					rolePermissions = append(rolePermissions, model.RolePermission{
+						RoleId:     permBody.Role.ID,
+						MenuId:     menu.ID,
+						ActionData: menu.ActionData,
+						ActionList: menu.ActionList,
+					})
+					println("add child id:", permission.ID)
+				}*/
+
 		}
 	}
 

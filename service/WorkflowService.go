@@ -29,6 +29,7 @@ func WorkflowSelectByList(c *gin.Context) {
 	type Workflow struct {
 		model.Workflow
 		InstName string `json:"instName"`
+		NickName string `json:"nickName"`
 	}
 	var workflows []Workflow
 	var totalCount int64
@@ -36,10 +37,10 @@ func WorkflowSelectByList(c *gin.Context) {
 
 	// 查询条件处理
 	if name, isExist := c.GetQuery("name"); isExist == true && strings.Trim(name, " ") != "" {
-		Db = Db.Where("name like ?", "%"+name+"%")
+		Db = Db.Where("workflows.name like ?", "%"+name+"%")
 	}
 	if status, isExist := c.GetQuery("status"); isExist == true && status != "0" {
-		Db = Db.Where("status = ?", status)
+		Db = Db.Where("workflows.status = ?", status)
 	}
 
 	userInfo, _ := c.Keys["UserName"]
@@ -54,13 +55,20 @@ func WorkflowSelectByList(c *gin.Context) {
 
 	// 执行查询
 	Db = Db.Preload("WorkflowRecords", func(db *gorm.DB) *gorm.DB {
-		return db.Order("id asc")
-	})
-	Db = Db.Select("workflows.*, instances.name as inst_name").Joins("left join instances on workflows.inst_id = instances.inst_id").Where(
-		"(user_name = ?", userName).
-		Or("workflows.id in (?))", model.Db.Table("workflow_records").Where("assignee_user_name = ?", userName).Select("workflow_id")).
-		Order("created_at desc").Limit(pageSize).Offset((pageNo-1)*pageSize - 1).Find(&workflows)
-	Db.Model(&model.Workflow{}).Count(&totalCount)
+		return db.Order("workflow_records.id asc")
+	}).Preload("WorkflowRecords.User")
+	Db.Select("workflows.*, instances.name as inst_name, users.nick_name").
+		Joins("left join instances on workflows.inst_id = instances.inst_id").
+		Joins("left join users on workflows.user_name = users.user_name").
+		Where("(workflows.user_name = ?", userName).
+		Or("workflows.id in (?))", model.Db.Table("workflow_records").
+			Where("assignee_user_name = ?", userName).Select("workflow_id")).
+		Order("created_at desc").
+		Limit(pageSize).Offset((pageNo-1)*pageSize - 1).
+		Find(&workflows).
+		Limit(-1).
+		Offset(-1).
+		Count(&totalCount)
 
 	// 处理结果集并返回
 	totalPage := math.Ceil(float64(totalCount) / float64(pageSize))
@@ -191,16 +199,7 @@ func WorkflowInsert(c *gin.Context) {
 }
 
 func WorkflowUpdate(c *gin.Context) {
-	// 参数映射到对象
-	var workflow model.Workflow
-	if err := c.ShouldBind(&workflow); err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
-		return
-	}
-	// 执行更新
-	updMap := map[string]interface{}{"name": workflow.Name, "describe": workflow.Describe}
-	model.Db.Model(model.Workflow{}).Where("id = ?", workflow.ID).Updates(updMap)
-	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": "", "err": ""})
+	WorkflowInsert(c)
 }
 
 func WorkflowDelete(c *gin.Context) {
@@ -264,6 +263,8 @@ func WorkflowAuditUpdate(c *gin.Context) {
 	// 是最后一个，更新workflow状态为审核完成，待上线
 	// 不是最后一个，获取下一个审批节点，插入workflowRecord
 	tx := model.Db.Begin()
+	var workflow model.Workflow
+	tx.Where("id = ?", workflowRecord.WorkflowId).First(&workflow)
 	switch workflowRecord.AuditStatus {
 	case model.FlowAuditStatusPassed:
 		var workflowTemplateDetail model.WorkflowTemplateDetail
@@ -301,8 +302,7 @@ func WorkflowAuditUpdate(c *gin.Context) {
 					IsAudit:     1,
 					Remarks:     workflowRecord.Remarks,
 					HandledAt:   sql.NullTime{Time: time.Now(), Valid: true}})
-
-			result := tx.Model(&model.Workflow{}).Where("id = ?", workflowRecord.WorkflowId).Update("status", model.WorkflowStatusPendingExecution)
+			result := tx.Model(&workflow).Update("status", model.WorkflowStatusPendingExecution)
 			if result.Error != nil {
 				c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error})
 				tx.Rollback()
@@ -323,7 +323,7 @@ func WorkflowAuditUpdate(c *gin.Context) {
 			tx.Rollback()
 			return
 		}
-		result = tx.Model(&model.Workflow{}).Where("id = ?", workflowRecord.WorkflowId).
+		result = tx.Model(&workflow).Where("id = ?", workflowRecord.WorkflowId).
 			Updates(model.Workflow{Status: model.WorkflowStatusRejected})
 		if result.Error != nil {
 			c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error.Error()})
@@ -344,7 +344,7 @@ func WorkflowCancelUpdate(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
 		return
 	}
-	result := model.Db.Model(&model.Workflow{}).Where("id = ?", workflow.ID).Updates(&model.Workflow{Status: model.WorkflowStatusCanceled})
+	result := model.Db.Model(&workflow).Where("id = ?", workflow.ID).Updates(&model.Workflow{Status: model.WorkflowStatusCanceled})
 	if result.Error != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error.Error()})
 		return
@@ -371,25 +371,45 @@ func WorkflowExecuteUpdate(c *gin.Context) {
 		return
 	}
 	// 更新状态 WorkflowStatusExecuting
-	result = model.Db.Model(&model.Workflow{}).Where("id = ?", workflow.ID).Updates(&model.Workflow{Status: model.WorkflowStatusExecuting})
+	result = model.Db.Model(&workflow).Where("id = ?", workflow.ID).Updates(&model.Workflow{Status: model.WorkflowStatusExecuting})
 	if result.Error != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error.Error()})
 		return
 	}
-	// 执行SQL
-	err := executeSQL(&instance, workflow.DbName, workflow.SqlContent)
+
+	// 迭代 WorkflowSqlDetail
+	rows, err := model.Db.Model(&model.WorkflowSqlDetail{}).
+		Where("workflow_id = ?", workflow.ID).Order("serial_number asc").Rows()
+	defer rows.Close()
 	if err != nil {
-		// 更新状态 WorkflowStatusExecutionFailed
-		result = model.Db.Model(&model.Workflow{}).Where("id = ?", workflow.ID).Updates(&model.Workflow{Status: model.WorkflowStatusExecutionFailed})
-		if result.Error != nil {
-			c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error.Error()})
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
+	}
+	for rows.Next() {
+		var workflowSqlDetail model.WorkflowSqlDetail
+		model.Db.ScanRows(rows, &workflowSqlDetail)
+		// 执行SQL
+		err := executeSQL(&instance, workflow.DbName, workflowSqlDetail.Statement)
+		if err != nil {
+			// 更新状态 workflowSqlDetail failed
+			model.Db.Model(&workflowSqlDetail).Updates(model.WorkflowSqlDetail{
+				ExecutionStatus: model.WorkflowSqlExecutionStatusFailed,
+				ExecutionMsg:    err.Error(),
+			})
+
+			// 更新状态 WorkflowStatusExecutionFailed
+			result = model.Db.Model(&workflow).Where("id = ?", workflow.ID).Updates(&model.Workflow{Status: model.WorkflowStatusExecutionFailed})
+			if result.Error != nil {
+				c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
-		return
+		// 更新状态 workflowSqlDetail successfully
+		model.Db.Model(&workflowSqlDetail).Updates(model.WorkflowSqlDetail{ExecutionStatus: model.WorkflowSqlExecutionStatusSuccessfully})
 	}
 	// 更新状态 WorkflowStatusFinished
-	result = model.Db.Model(&model.Workflow{}).Where("id = ?", workflow.ID).Updates(&model.Workflow{Status: model.WorkflowStatusFinished})
+	result = model.Db.Model(&workflow).Where("id = ?", workflow.ID).Updates(&model.Workflow{Status: model.WorkflowStatusFinished})
 	if result.Error != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error.Error()})
 		return

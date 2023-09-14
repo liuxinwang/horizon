@@ -24,10 +24,15 @@ type Prometheus struct {
 	Port int32
 }
 
+type DingWebhook struct {
+	Webhook string
+}
+
 type Config struct {
-	General    General
-	Mysql      Mysql
-	Prometheus Prometheus
+	General     General
+	Mysql       Mysql
+	Prometheus  Prometheus
+	DingWebhook DingWebhook
 }
 
 var Conf Config
