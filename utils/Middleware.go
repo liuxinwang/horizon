@@ -17,7 +17,7 @@ func JWTAuthMiddleware() *jwt.GinJWTMiddleware {
 	authMiddleware, err := jwt.New(&jwt.GinJWTMiddleware{
 		Realm:       "horizon zone",
 		Key:         []byte(config.Conf.General.SecretKey),
-		Timeout:     time.Hour,
+		Timeout:     time.Hour * time.Duration(8),
 		MaxRefresh:  time.Hour,
 		IdentityKey: identityKey,
 		// 此函数在成功验证（登录）后调用
