@@ -5,6 +5,7 @@ import (
 	"fmt"
 	json "github.com/json-iterator/go"
 	"gorm.io/gorm"
+	"horizon/config"
 	"horizon/notification"
 	"time"
 )
@@ -116,8 +117,8 @@ func (w *Workflow) AfterUpdate(tx *gorm.DB) (err error) {
 		markdown := notification.DingContentMarkdown{
 			Title: "SQL工单通知",
 			Text: fmt.Sprintf(
-				"用户：@%s 提交的 SQL工单【%s】，已审核通过。[工单详情](http://localhost:8000/sqlaudit/workflowDetail/%d)",
-				workflowUser.Phone, w.Name, w.ID),
+				"用户：@%s 提交的 SQL工单【%s】，已审核通过。[工单详情](%s/sqlaudit/workflowDetail/%d)",
+				workflowUser.Phone, w.Name, config.Conf.General.HomeAddress, w.ID),
 		}
 		at := notification.DingContentAt{
 			AtMobiles: []string{workflowUser.Phone},
@@ -139,8 +140,8 @@ func (w *Workflow) AfterUpdate(tx *gorm.DB) (err error) {
 		markdown := notification.DingContentMarkdown{
 			Title: "SQL工单通知",
 			Text: fmt.Sprintf(
-				"用户：@%s 提交的 SQL工单【%s】，被驳回！[工单详情](http://localhost:8000/sqlaudit/workflowDetail/%d)",
-				workflowUser.Phone, w.Name, w.ID),
+				"用户：@%s 提交的 SQL工单【%s】，被驳回！[工单详情](%s/sqlaudit/workflowDetail/%d)",
+				workflowUser.Phone, w.Name, config.Conf.General.HomeAddress, w.ID),
 		}
 		at := notification.DingContentAt{
 			AtMobiles: []string{workflowUser.Phone},
@@ -183,9 +184,9 @@ func (wr *WorkflowRecord) AfterCreate(tx *gorm.DB) (err error) {
 		markdown := notification.DingContentMarkdown{
 			Title: "SQL工单通知",
 			Text: fmt.Sprintf(
-				"用户：%s 提交的 SQL工单【%s】，正在等待 @%s 审批，请确认！[审核](http://localhost:8000/sqlaudit/workflowDetail/%d)",
+				"用户：%s 提交的 SQL工单【%s】，正在等待 @%s 审批，请确认！[审核](%s/sqlaudit/workflowDetail/%d)",
 				workflowUser.NickName, workflow.Name,
-				workflowAssigneeUser.Phone, wr.WorkflowId),
+				workflowAssigneeUser.Phone, config.Conf.General.HomeAddress, wr.WorkflowId),
 		}
 		at := notification.DingContentAt{
 			AtMobiles: []string{workflowAssigneeUser.Phone},

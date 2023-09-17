@@ -32,13 +32,13 @@
   - 慢查分析
   - 空间分析
   - 审计日志
-- TODO SQL审核
-  - SQL查询
-  - SQL上线
-  - 数据导出
-  - 安全规则
+- SQL审核
+  - TODO SQL查询
+  - SQL上线（now only doris）
+  - TODO 数据导出
+  - TODO 安全规则
   - 审批流程
-  - 操作审计
+  - TODO 操作审计
 - TODO 数据传输
 - TODO 数据库备份
 - 系统管理
