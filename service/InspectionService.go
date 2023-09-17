@@ -20,10 +20,10 @@ func InspectionSelectByList(c *gin.Context) {
 	data := gin.H{"totalCount": 0, "data": &[]model.Inspection{}, "pageNo": pageNo, "pageSize": pageSize, "totalPage": 0}
 
 	// 查询条件处理
-	if instId, isExist := c.GetQuery("InstId"); isExist == true && strings.Trim(instId, " ") != "" {
+	if instId, isExist := c.GetQuery("instId"); isExist == true && strings.Trim(instId, " ") != "" {
 		Db = Db.Where("inst_id like ?", "%"+instId+"%")
 	}
-	if instName, isExist := c.GetQuery("InstName"); isExist == true && strings.Trim(instName, " ") != "" {
+	if instName, isExist := c.GetQuery("instName"); isExist == true && strings.Trim(instName, " ") != "" {
 		Db = Db.Where("inst_name like ?", "%"+instName+"%")
 	}
 

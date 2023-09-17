@@ -111,7 +111,8 @@ func InstanceUpdate(c *gin.Context) {
 		}
 	}
 	// 执行更新
-	updMap := map[string]interface{}{"name": instance.Name, "role": instance.Role, "ip": instance.Ip,
+	updMap := map[string]interface{}{"name": instance.Name, "type": instance.Type,
+		"env_type": instance.EnvType, "role": instance.Role, "ip": instance.Ip,
 		"port": instance.Port, "user": instance.User, "password": instance.Password}
 	model.Db.Model(model.Instance{}).Where("inst_id = ?", instance.InstId).Updates(updMap)
 	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": "", "err": ""})

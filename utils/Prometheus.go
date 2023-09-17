@@ -24,32 +24,32 @@ type Prom struct {
 }
 
 type MysqlUserResult struct {
-	User string
-	Host string
+	User string `json:"user"`
+	Host string `json:"host"`
 }
 
 type MysqlTablesResult struct {
-	TableCatalog   string    `gorm:"column:TABLE_CATALOG"`
-	TableSchema    string    `gorm:"column:TABLE_SCHEMA"`
-	TableName      string    `gorm:"column:TABLE_NAME"`
-	TableType      string    `gorm:"column:TABLE_TYPE"`
-	Engine         string    `gorm:"column:ENGINE"`
-	Version        int       `gorm:"column:VERSION"`
-	RowFormat      string    `gorm:"column:ROW_FORMAT"`
-	TableRows      int64     `gorm:"column:TABLE_ROWS"`
-	AvgRowLength   int64     `gorm:"column:AVG_ROW_LENGTH"`
-	DataLength     int64     `gorm:"column:DATA_LENGTH"`
-	MaxDataLength  int64     `gorm:"column:MAX_DATA_LENGTH"`
-	IndexLength    int64     `gorm:"column:INDEX_LENGTH"`
-	DataFree       int64     `gorm:"column:DATA_FREE"`
-	AutoIncrement  int64     `gorm:"column:AUTO_INCREMENT"`
-	CreateTime     time.Time `gorm:"column:CREATE_TIME"`
-	UpdateTime     time.Time `gorm:"column:UPDATE_TIME"`
-	CheckTime      time.Time `gorm:"column:CHECK_TIME"`
-	TableCollation string    `gorm:"column:TABLE_COLLATION"`
-	Checksum       int64     `gorm:"column:CHECKSUM"`
-	CreateOptions  string    `gorm:"column:CREATE_OPTIONS"`
-	TableComment   string    `gorm:"column:TABLE_COMMENT"`
+	TableCatalog   string    `gorm:"column:TABLE_CATALOG" json:"tableCatalog"`
+	TableSchema    string    `gorm:"column:TABLE_SCHEMA" json:"tableSchema"`
+	TableName      string    `gorm:"column:TABLE_NAME" json:"tableName"`
+	TableType      string    `gorm:"column:TABLE_TYPE" json:"tableType"`
+	Engine         string    `gorm:"column:ENGINE" json:"engine"`
+	Version        int       `gorm:"column:VERSION" json:"version"`
+	RowFormat      string    `gorm:"column:ROW_FORMAT" json:"rowFormat"`
+	TableRows      int64     `gorm:"column:TABLE_ROWS" json:"tableRows"`
+	AvgRowLength   int64     `gorm:"column:AVG_ROW_LENGTH" json:"avgRowLength"`
+	DataLength     int64     `gorm:"column:DATA_LENGTH" json:"dataLength"`
+	MaxDataLength  int64     `gorm:"column:MAX_DATA_LENGTH" json:"maxDataLength"`
+	IndexLength    int64     `gorm:"column:INDEX_LENGTH" json:"indexLength"`
+	DataFree       int64     `gorm:"column:DATA_FREE" json:"dataFree"`
+	AutoIncrement  int64     `gorm:"column:AUTO_INCREMENT" json:"autoIncrement"`
+	CreateTime     time.Time `gorm:"column:CREATE_TIME" json:"createTime"`
+	UpdateTime     time.Time `gorm:"column:UPDATE_TIME" json:"updateTime"`
+	CheckTime      time.Time `gorm:"column:CHECK_TIME" json:"checkTime"`
+	TableCollation string    `gorm:"column:TABLE_COLLATION" json:"tableCollation"`
+	Checksum       int64     `gorm:"column:CHECKSUM" json:"checksum"`
+	CreateOptions  string    `gorm:"column:CREATE_OPTIONS" json:"createOptions"`
+	TableComment   string    `gorm:"column:TABLE_COMMENT" json:"tableComment"`
 }
 
 func PromAPI() v1.API {

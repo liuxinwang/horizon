@@ -26,10 +26,10 @@ const NetworkTrafficIn string = "NETWORK_TRAFFIC_IN"
 const NetworkTrafficOut string = "NETWORK_TRAFFIC_OUT"
 
 type Metric struct {
-	Key        string       `gorm:"type:varchar(50);primaryKey;comment:指标Key"`
-	Name       string       `gorm:"type:varchar(20);not null;comment:名称"`
-	Unit       string       `gorm:"type:varchar(20);not null;comment:单位"`
-	CreatedAt  time.Time    `gorm:"type:datetime;not null;default:current_timestamp;comment:创建时间"`
-	UpdatedAt  time.Time    `gorm:"type:datetime;not null;default:current_timestamp on update current_timestamp;comment:修改时间"`
-	InstMetric []InstMetric `gorm:"foreignKey:Metric;references:Key"`
+	Key        string       `gorm:"type:varchar(50);primaryKey;comment:指标Key" json:"key"`
+	Name       string       `gorm:"type:varchar(20);not null;comment:名称" json:"name"`
+	Unit       string       `gorm:"type:varchar(20);not null;comment:单位" json:"unit"`
+	CreatedAt  time.Time    `gorm:"type:datetime;not null;default:current_timestamp;comment:创建时间" json:"createdAt"`
+	UpdatedAt  time.Time    `gorm:"type:datetime;not null;default:current_timestamp on update current_timestamp;comment:修改时间" json:"updatedAt"`
+	InstMetric []InstMetric `gorm:"foreignKey:Metric;references:Key" json:"instMetric"`
 }

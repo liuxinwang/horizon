@@ -124,9 +124,9 @@ func InspTaskRunning(instId string) {
 
 // 初始化巡检记录
 func initInspection(instance model.Instance) (*gorm.DB, *model.Inspection) {
-	InspId := instance.InstId + "-" + time.Now().Format("20060102")
+	inspId := instance.InstId + "-" + time.Now().Format("20060102")
 	inspection := model.Inspection{
-		InspId:   InspId,
+		InspId:   inspId,
 		InstId:   instance.InstId,
 		InstName: instance.Name,
 	}
