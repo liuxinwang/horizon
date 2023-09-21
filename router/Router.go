@@ -118,6 +118,7 @@ func commonRouter(r *gin.Engine) {
 	workflow.POST("audit", handler.WorkflowAuditPost)
 	workflow.POST("cancel", handler.WorkflowCancelPost)
 	workflow.POST("execute", handler.WorkflowExecutePost)
+	workflow.POST("scheduledExecute", handler.WorkflowScheduledExecutionPost)
 	workflow.GET("sqlDetail", handler.WorkflowIdSqlDetailGet)
 
 	// workflowTemplate group

@@ -10,12 +10,12 @@ import (
 var Cron = cron.New()
 
 func InitTasks() {
+	// 清除task数据，用于重新生成
+	model.Db.Where("id > ?", 0).Delete(&model.Task{})
+
 	// 循环instances生成cron
 	rows, _ := model.Db.Model(&model.Instance{}).Where("status = ? AND insp_status = ? ", "Running", "Enabled").Rows()
 	defer rows.Close()
-
-	// 清除task数据，用于重新生成
-	model.Db.Where("id > ?", 0).Delete(&model.Task{})
 	for rows.Next() {
 		var instance model.Instance
 		// ScanRows 方法用于将一行记录扫描至结构体
@@ -30,7 +30,9 @@ func InitTasks() {
 			Args: strings.Join([]string{instance.InstId}, ","),
 		})
 	}
-
 	// 开始cron
 	Cron.Start()
+
+	// 开始定时工单任务
+	go WorkflowTaskRunning()
 }

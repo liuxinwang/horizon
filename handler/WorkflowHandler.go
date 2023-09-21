@@ -41,6 +41,10 @@ func WorkflowExecutePost(c *gin.Context) {
 	service.WorkflowExecuteUpdate(c)
 }
 
+func WorkflowScheduledExecutionPost(c *gin.Context) {
+	service.WorkflowScheduledExecutionUpdate(c)
+}
+
 func WorkflowIdSqlDetailGet(c *gin.Context) {
 	service.WorkflowSqlDetailSelectById(c)
 }

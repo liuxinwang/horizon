@@ -17,27 +17,28 @@ type WorkflowSqlAuditLevel string
 type WorkflowSqlExecutionStatus string
 
 const (
-	WorkflowStatusPendingAudit     workflowStatus = "PendingAudit"
-	WorkflowStatusPendingExecution workflowStatus = "PendingExecution"
-	WorkflowStatusRejected         workflowStatus = "Rejected"
-	WorkflowStatusCanceled         workflowStatus = "Canceled"
-	WorkflowStatusExecuting        workflowStatus = "Executing"
-	WorkflowStatusExecutionFailed  workflowStatus = "ExecutionFailed"
-	WorkflowStatusFinished         workflowStatus = "Finished"
+	WorkflowStatusPendingAudit       workflowStatus = "PendingAudit"       // 待审核
+	WorkflowStatusPendingExecution   workflowStatus = "PendingExecution"   // 待执行
+	WorkflowStatusScheduledExecution workflowStatus = "ScheduledExecution" // 定时执行
+	WorkflowStatusRejected           workflowStatus = "Rejected"           // 驳回
+	WorkflowStatusCanceled           workflowStatus = "Canceled"           // 取消
+	WorkflowStatusExecuting          workflowStatus = "Executing"          // 执行中
+	WorkflowStatusExecutionFailed    workflowStatus = "ExecutionFailed"    // 执行失败
+	WorkflowStatusFinished           workflowStatus = "Finished"           // 完成
 
-	FlowAuditStatusPendingAudit  workflowAuditStatus = "PendingAudit"
-	FlowAuditStatusPassed        workflowAuditStatus = "Passed"
-	FlowAuditStatusAuditRejected workflowAuditStatus = "Rejected"
+	FlowAuditStatusPendingAudit  workflowAuditStatus = "PendingAudit" // 待审核
+	FlowAuditStatusPassed        workflowAuditStatus = "Passed"       // 审核通过
+	FlowAuditStatusAuditRejected workflowAuditStatus = "Rejected"     // 审核驳回
 
-	WorkflowSqlAuditStatusPassed WorkflowSqlAuditStatus = "Passed"
-	WorkflowSqlAuditStatusFailed WorkflowSqlAuditStatus = "Failed"
+	WorkflowSqlAuditStatusPassed WorkflowSqlAuditStatus = "Passed" // 审核通过
+	WorkflowSqlAuditStatusFailed WorkflowSqlAuditStatus = "Failed" // 审核失败
 
-	WorkflowSqlAuditLevelWarning WorkflowSqlAuditLevel = "Warning"
-	WorkflowSqlAuditLevelError   WorkflowSqlAuditLevel = "Error"
-	WorkflowSqlAuditLevelSuccess WorkflowSqlAuditLevel = "Success"
+	WorkflowSqlAuditLevelWarning WorkflowSqlAuditLevel = "Warning" // 警告
+	WorkflowSqlAuditLevelError   WorkflowSqlAuditLevel = "Error"   // 错误
+	WorkflowSqlAuditLevelSuccess WorkflowSqlAuditLevel = "Success" // 成功
 
-	WorkflowSqlExecutionStatusFailed       WorkflowSqlExecutionStatus = "Failed"
-	WorkflowSqlExecutionStatusSuccessfully WorkflowSqlExecutionStatus = "Successfully"
+	WorkflowSqlExecutionStatusFailed       WorkflowSqlExecutionStatus = "Failed"       // 执行失败
+	WorkflowSqlExecutionStatusSuccessfully WorkflowSqlExecutionStatus = "Successfully" // 执行成功
 )
 
 type Workflow struct {
@@ -50,6 +51,7 @@ type Workflow struct {
 	DbName          string           `gorm:"type:varchar(255);not null;comment:数据库名" json:"dbName"`
 	SqlContent      string           `gorm:"type:text;not null;comment:SQL内容" json:"sqlContent"`
 	UserName        string           `gorm:"type:varchar(50);not null;comment:用户名" json:"userName"`
+	ScheduledAt     *time.Time       `gorm:"type:datetime;default null;comment:定时调度时间" json:"scheduledAt"`
 	CreatedAt       time.Time        `gorm:"type:datetime;not null;default:current_timestamp;comment:创建时间" json:"createdAt"`
 	UpdatedAt       time.Time        `gorm:"type:datetime;not null;default:current_timestamp on update current_timestamp;comment:修改时间" json:"updatedAt"`
 	WorkflowRecords []WorkflowRecord `gorm:"foreignKey:WorkflowId;references:ID" json:"workflowRecords"`

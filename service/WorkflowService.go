@@ -383,12 +383,13 @@ func WorkflowExecuteUpdate(c *gin.Context) {
 	defer rows.Close()
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
+		return
 	}
 	for rows.Next() {
 		var workflowSqlDetail model.WorkflowSqlDetail
 		model.Db.ScanRows(rows, &workflowSqlDetail)
 		// 执行SQL
-		err := executeSQL(&instance, workflow.DbName, workflowSqlDetail.Statement)
+		err := ExecuteSQL(&instance, workflow.DbName, workflowSqlDetail.Statement)
 		if err != nil {
 			// 更新状态 workflowSqlDetail failed
 			model.Db.Model(&workflowSqlDetail).Updates(model.WorkflowSqlDetail{
@@ -417,7 +418,26 @@ func WorkflowExecuteUpdate(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": "", "err": ""})
 }
 
-func executeSQL(instance *model.Instance, db string, sql string) error {
+// WorkflowScheduledExecutionUpdate 工单定时执行
+func WorkflowScheduledExecutionUpdate(c *gin.Context) {
+	// 参数映射到对象
+	var workflow model.Workflow
+	if err := c.ShouldBind(&workflow); err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
+		return
+	}
+	result := model.Db.Model(&workflow).Where("id = ?", workflow.ID).Updates(&model.Workflow{
+		Status:      model.WorkflowStatusScheduledExecution,
+		ScheduledAt: workflow.ScheduledAt,
+	})
+	if result.Error != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": "", "err": ""})
+}
+
+func ExecuteSQL(instance *model.Instance, db string, sql string) error {
 	dsn := "%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local&timeout=1s"
 	dsn = fmt.Sprintf(dsn, instance.User, utils.DecryptAES([]byte(config.Conf.General.SecretKey), instance.Password), instance.Ip, instance.Port, db)
 	Db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
