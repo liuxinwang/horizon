@@ -161,6 +161,52 @@ func (w *Workflow) AfterUpdate(tx *gorm.DB) (err error) {
 		}
 		notification.SendDingDing(string(marshal))
 	}
+	if w.Status == WorkflowStatusFinished {
+		markdown := notification.DingContentMarkdown{
+			Title: "SQL工单通知",
+			Text: fmt.Sprintf(
+				"用户：@%s 提交的 SQL工单【%s】，已执行成功。[工单详情](%s/sqlaudit/workflowDetail/%d)",
+				workflowUser.Phone, w.Name, config.Conf.General.HomeAddress, w.ID),
+		}
+		at := notification.DingContentAt{
+			AtMobiles: []string{workflowUser.Phone},
+			AtUserIds: []string{},
+			IsAtAll:   false,
+		}
+		content := notification.DingContent{
+			MsgType:         "markdown",
+			ContentMarkdown: markdown,
+			ContentAt:       at,
+		}
+		marshal, err := json.Marshal(content)
+		if err != nil {
+			return err
+		}
+		notification.SendDingDing(string(marshal))
+	}
+	if w.Status == WorkflowStatusExecutionFailed {
+		markdown := notification.DingContentMarkdown{
+			Title: "SQL工单通知",
+			Text: fmt.Sprintf(
+				"用户：@%s 提交的 SQL工单【%s】，执行失败！[工单详情](%s/sqlaudit/workflowDetail/%d)",
+				workflowUser.Phone, w.Name, config.Conf.General.HomeAddress, w.ID),
+		}
+		at := notification.DingContentAt{
+			AtMobiles: []string{workflowUser.Phone},
+			AtUserIds: []string{},
+			IsAtAll:   false,
+		}
+		content := notification.DingContent{
+			MsgType:         "markdown",
+			ContentMarkdown: markdown,
+			ContentAt:       at,
+		}
+		marshal, err := json.Marshal(content)
+		if err != nil {
+			return err
+		}
+		notification.SendDingDing(string(marshal))
+	}
 	return
 }
 

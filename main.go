@@ -8,6 +8,7 @@ import (
 	"horizon/model"
 	"horizon/router"
 	"horizon/tasks"
+	"horizon/utils"
 	"html/template"
 	"io/fs"
 	"log"
@@ -18,6 +19,7 @@ import (
 var Static embed.FS
 
 func main() {
+	utils.HelpInit()
 	config.InitConfig()
 	model.InitDb()
 	var r *gin.Engine

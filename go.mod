@@ -6,6 +6,7 @@ require (
 	github.com/BurntSushi/toml v1.3.2
 	github.com/appleboy/gin-jwt/v2 v2.8.0
 	github.com/gin-gonic/gin v1.8.1
+	github.com/go-demo/version v0.0.0-20200109120206-2cde9473fd92
 	github.com/json-iterator/go v1.1.12
 	github.com/pingcap/tidb v1.1.0-beta.0.20230808082424-40b72e7a9a4f
 	github.com/pingcap/tidb/parser v0.0.0-20230808082424-40b72e7a9a4f
