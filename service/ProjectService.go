@@ -182,7 +182,7 @@ func ProjectUserSelectByUserName(c *gin.Context) {
 	}
 	var results []result
 	// 执行查询
-	model.Db.Select("projects.*").Model(&model.ProjectUser{}).
+	model.Db.Debug().Select("distinct projects.*").Model(&model.ProjectUser{}).
 		Joins("inner join projects on project_users.proj_id = projects.proj_id").
 		Where("user_name = ?", c.Param("userName")).Scan(&results)
 	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": &results, "err": ""})

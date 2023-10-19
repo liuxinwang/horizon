@@ -59,16 +59,16 @@ func commonRouter(r *gin.Engine) {
 	user := api.Group("/user", authMiddleware.MiddlewareFunc())
 	user.GET("/info", handler.GetUser)
 	user.GET("/nav", handler.GetUserNav)
-	user.GET("", handler.GetUserList)
-	user.PUT("", handler.PutUser)
+	user.GET("/query", handler.GetUserList)
+	user.PUT("/edit", handler.PutUser)
 	user.PUT("resetPassword", handler.PutResetPassword)
 
 	// role group
 	role := api.Group("/role", authMiddleware.MiddlewareFunc())
-	role.GET("", handler.RoleGet)
-	role.POST("", handler.RolePost)
-	role.PUT("", handler.RolePut)
-	role.DELETE("/:id", handler.RoleDelete)
+	role.GET("query", handler.RoleGet)
+	role.POST("add", handler.RolePost)
+	role.PUT("edit", handler.RolePut)
+	role.DELETE("delete/:id", handler.RoleDelete)
 	role.POST("permission", handler.RolePermissionPost)
 
 	// menu group
@@ -77,16 +77,16 @@ func commonRouter(r *gin.Engine) {
 
 	// instance group
 	instance := api.Group("/instance", authMiddleware.MiddlewareFunc())
-	instance.GET("", handler.InstanceGet)
+	instance.GET("query", handler.InstanceGet)
 	instance.GET("/:instId", handler.InstanceInstIdGet)
-	instance.POST("", handler.InstancePost)
-	instance.PUT("", handler.InstancePut)
-	instance.DELETE("/:id", handler.InstanceDelete)
+	instance.POST("add", handler.InstancePost)
+	instance.PUT("edit", handler.InstancePut)
+	instance.DELETE("delete/:id", handler.InstanceDelete)
 	instance.GET("db/:instId", handler.InstanceDdGet)
 
 	// inspection group
 	inspection := api.Group("/inspection", authMiddleware.MiddlewareFunc())
-	inspection.GET("", handler.InspectionGet)
+	inspection.GET("query", handler.InspectionGet)
 	inspection.GET("/:id", handler.InspectionDetailGet)
 
 	// score group
@@ -99,8 +99,8 @@ func commonRouter(r *gin.Engine) {
 	project := sqlAudit.Group("/project", authMiddleware.MiddlewareFunc())
 	project.GET("", handler.ProjectGet)
 	project.GET("/:projId", handler.ProjectProjIdGet)
-	project.POST("", handler.ProjectPost)
-	project.PUT("", handler.ProjectPut)
+	project.POST("add", handler.ProjectPost)
+	project.PUT("edit", handler.ProjectPut)
 	project.DELETE("/:id", handler.ProjectDelete)
 	project.POST("resource/config", handler.ProjectResourceConfigPost)
 	project.GET("role", handler.ProjectRoleGet)
@@ -111,8 +111,8 @@ func commonRouter(r *gin.Engine) {
 	workflow := sqlAudit.Group("/workflow", authMiddleware.MiddlewareFunc())
 	workflow.GET("", handler.WorkflowGet)
 	workflow.GET("/:id", handler.WorkflowIdGet)
-	workflow.POST("", handler.WorkflowPost)
-	workflow.PUT("", handler.WorkflowPut)
+	workflow.POST("add", handler.WorkflowPost)
+	workflow.PUT("edit", handler.WorkflowPut)
 	workflow.DELETE("/:id", handler.WorkflowDelete)
 	workflow.GET("progress/:id", handler.WorkflowIdProgressGet)
 	workflow.POST("audit", handler.WorkflowAuditPost)
@@ -124,8 +124,8 @@ func commonRouter(r *gin.Engine) {
 	// workflowTemplate group
 	workflowTemplate := sqlAudit.Group("/workflowTemplate", authMiddleware.MiddlewareFunc())
 	workflowTemplate.GET("", handler.WorkflowTemplateGet)
-	workflowTemplate.POST("", handler.WorkflowTemplatePost)
-	workflowTemplate.PUT("", handler.WorkflowTemplatePut)
+	workflowTemplate.POST("add", handler.WorkflowTemplatePost)
+	workflowTemplate.PUT("edit", handler.WorkflowTemplatePut)
 	workflowTemplate.DELETE("/:id", handler.WorkflowTemplateDelete)
 	workflowTemplate.POST("/config", handler.WorkflowTemplateConfigPost)
 }

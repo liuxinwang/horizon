@@ -9,6 +9,7 @@ import (
 	"horizon/config"
 	"horizon/model"
 	"log"
+	"regexp"
 	"time"
 )
 
@@ -59,13 +60,23 @@ func JWTAuthMiddleware() *jwt.GinJWTMiddleware {
 			return &user, nil
 		},
 		// 给定用户身份值（data参数）和 gin 上下文，此函数应检查用户是否有权到达此端点
-		// 后端鉴权
 		Authorizator: func(data interface{}, c *gin.Context) bool {
 			if v, ok := data.(*model.User); ok && v.UserName == "admin" {
 				return true
 			}
-			if _, ok := data.(*model.User); ok {
-				return true
+			if v, ok := data.(*model.User); ok {
+				// 后端鉴权
+				compileRegex := regexp.MustCompile("^/api(/.+)") // 正则表达式的分组，以括号()表示，每一对括号就是我们匹配到的一个文本，可以把他们提取出来。
+				matchPath := compileRegex.FindStringSubmatch(c.FullPath())[1]
+				var countNum int
+				sql := "SELECT count(*) as count_num FROM role_permissions rp " +
+					"inner join user_roles ur on rp.role_id = ur.role_id " +
+					"inner join users u on ur.user_id = u.id " +
+					"WHERE u.user_name = ? AND json_contains(rp.action_data, json_object('url', ?))"
+				model.Db.Raw(sql, v.UserName, matchPath).First(&countNum)
+				if countNum > 0 {
+					return true
+				}
 			}
 			return false
 		},

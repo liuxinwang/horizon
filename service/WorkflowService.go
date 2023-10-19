@@ -97,6 +97,10 @@ func WorkflowInsert(c *gin.Context) {
 	}
 	userInfo, _ := c.Keys["UserName"]
 	workflow.UserName = userInfo.(*model.User).UserName
+
+	// 查询是否有新增工单权限
+	// CanAddWorkflow(&workflow)
+
 	tx := model.Db.Begin()
 
 	var instance model.Instance
@@ -198,17 +202,19 @@ func WorkflowInsert(c *gin.Context) {
 	}
 }
 
+// WorkflowUpdate 重新修改
 func WorkflowUpdate(c *gin.Context) {
 	WorkflowInsert(c)
 }
 
+// WorkflowDelete 删除
 func WorkflowDelete(c *gin.Context) {
 	id := c.Param("id")
 	result := model.Db.Delete(&model.Workflow{}, id)
 	if result.Error != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error.Error()})
 	} else if result.RowsAffected == 0 {
-		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": "项目不存在"})
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": "工单不存在"})
 	} else {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": "", "err": ""})
 	}
@@ -437,6 +443,7 @@ func WorkflowScheduledExecutionUpdate(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": "", "err": ""})
 }
 
+// ExecuteSQL 执行实例SQL
 func ExecuteSQL(instance *model.Instance, db string, sql string) error {
 	dsn := "%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local&timeout=1s"
 	dsn = fmt.Sprintf(dsn, instance.User, utils.DecryptAES([]byte(config.Conf.General.SecretKey), instance.Password), instance.Ip, instance.Port, db)
@@ -474,4 +481,10 @@ func WorkflowSqlDetailSelectById(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": data, "err": ""})
+}
+
+func CanAddWorkflow(workflow *model.Workflow) bool {
+	// 判断用户当前是否可新增
+	// 工单项目 = 用户所属项目
+	return true
 }
