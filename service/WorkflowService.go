@@ -98,8 +98,12 @@ func WorkflowInsert(c *gin.Context) {
 	userInfo, _ := c.Keys["UserName"]
 	workflow.UserName = userInfo.(*model.User).UserName
 
-	// 查询是否有新增工单权限
-	// CanAddWorkflow(&workflow)
+	// 判断是否有新增工单权限
+	canAdd := CanAddWorkflow(&workflow)
+	if !canAdd {
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": "无项目新增工单权限！"})
+		return
+	}
 
 	tx := model.Db.Begin()
 
@@ -263,6 +267,17 @@ func WorkflowAuditUpdate(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
 		return
 	}
+
+	userInfo, _ := c.Keys["UserName"]
+	userName := userInfo.(*model.User).UserName
+
+	// 判断是否有审核权限
+	canAudit := CanAuditWorkflow(&workflowRecord, userName)
+	if !canAudit {
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": "无工单审核权限！"})
+		return
+	}
+
 	// 更新workflowRecord状态
 	// auditStatus = FlowAuditStatusPassed
 	// 判断当前审批节点
@@ -271,6 +286,10 @@ func WorkflowAuditUpdate(c *gin.Context) {
 	tx := model.Db.Begin()
 	var workflow model.Workflow
 	tx.Where("id = ?", workflowRecord.WorkflowId).First(&workflow)
+	if workflow.Status != model.WorkflowStatusPendingAudit {
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": "非待审核工单！"})
+		return
+	}
 	switch workflowRecord.AuditStatus {
 	case model.FlowAuditStatusPassed:
 		var workflowTemplateDetail model.WorkflowTemplateDetail
@@ -483,8 +502,26 @@ func WorkflowSqlDetailSelectById(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": data, "err": ""})
 }
 
+// CanAddWorkflow 判断用户当前是否可新增
 func CanAddWorkflow(workflow *model.Workflow) bool {
-	// 判断用户当前是否可新增
-	// 工单项目 = 用户所属项目
-	return true
+	// 工单项目 in 用户所属项目
+	var count int64
+	model.Db.Model(&model.ProjectUser{}).
+		Where("user_name = ? and proj_id = ?", workflow.UserName, workflow.ProjId).Count(&count)
+	if count > 0 {
+		return true
+	}
+	return false
+}
+
+// CanAuditWorkflow 判断用户当前是否可审核
+func CanAuditWorkflow(workflowRecord *model.WorkflowRecord, userName string) bool {
+	var assigneeUserName string
+	model.Db.Model(&model.WorkflowRecord{}).Select("assignee_user_name").
+		Where("id = ?", workflowRecord.ID).First(&assigneeUserName)
+	// 用户属于当前工单审批人
+	if assigneeUserName == userName {
+		return true
+	}
+	return false
 }
