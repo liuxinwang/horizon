@@ -369,6 +369,26 @@ func WorkflowCancelUpdate(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
 		return
 	}
+
+	userInfo, _ := c.Keys["UserName"]
+	userName := userInfo.(*model.User).UserName
+
+	canCancel := CanCancelWorkflow(&workflow, userName)
+	if !canCancel {
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": "无工单取消权限！"})
+		return
+	}
+	var workflowStatus string
+	model.Db.Select("status").Model(&workflow).Where("id = ?", workflow.ID).First(&workflowStatus)
+	if model.WorkflowStatus(workflowStatus) == model.WorkflowStatusRejected ||
+		model.WorkflowStatus(workflowStatus) == model.WorkflowStatusCanceled ||
+		model.WorkflowStatus(workflowStatus) == model.WorkflowStatusExecuting ||
+		model.WorkflowStatus(workflowStatus) == model.WorkflowStatusExecutionFailed ||
+		model.WorkflowStatus(workflowStatus) == model.WorkflowStatusFinished {
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": "工单状态不支持取消！"})
+		return
+	}
+
 	result := model.Db.Model(&workflow).Where("id = ?", workflow.ID).Updates(&model.Workflow{Status: model.WorkflowStatusCanceled})
 	if result.Error != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error.Error()})
@@ -521,6 +541,15 @@ func CanAuditWorkflow(workflowRecord *model.WorkflowRecord, userName string) boo
 		Where("id = ?", workflowRecord.ID).First(&assigneeUserName)
 	// 用户属于当前工单审批人
 	if assigneeUserName == userName {
+		return true
+	}
+	return false
+}
+
+// CanCancelWorkflow 判断用户当前是否可取消
+func CanCancelWorkflow(workflow *model.Workflow, userName string) bool {
+	// 工单提交人 = 登录人
+	if workflow.UserName == userName {
 		return true
 	}
 	return false

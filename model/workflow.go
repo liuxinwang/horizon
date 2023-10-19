@@ -11,20 +11,20 @@ import (
 )
 
 type workflowAuditStatus string
-type workflowStatus string
+type WorkflowStatus string
 type WorkflowSqlAuditStatus string
 type WorkflowSqlAuditLevel string
 type WorkflowSqlExecutionStatus string
 
 const (
-	WorkflowStatusPendingAudit       workflowStatus = "PendingAudit"       // 待审核
-	WorkflowStatusPendingExecution   workflowStatus = "PendingExecution"   // 待执行
-	WorkflowStatusScheduledExecution workflowStatus = "ScheduledExecution" // 定时执行
-	WorkflowStatusRejected           workflowStatus = "Rejected"           // 驳回
-	WorkflowStatusCanceled           workflowStatus = "Canceled"           // 取消
-	WorkflowStatusExecuting          workflowStatus = "Executing"          // 执行中
-	WorkflowStatusExecutionFailed    workflowStatus = "ExecutionFailed"    // 执行失败
-	WorkflowStatusFinished           workflowStatus = "Finished"           // 完成
+	WorkflowStatusPendingAudit       WorkflowStatus = "PendingAudit"       // 待审核
+	WorkflowStatusPendingExecution   WorkflowStatus = "PendingExecution"   // 待执行
+	WorkflowStatusScheduledExecution WorkflowStatus = "ScheduledExecution" // 定时执行
+	WorkflowStatusRejected           WorkflowStatus = "Rejected"           // 驳回
+	WorkflowStatusCanceled           WorkflowStatus = "Canceled"           // 取消
+	WorkflowStatusExecuting          WorkflowStatus = "Executing"          // 执行中
+	WorkflowStatusExecutionFailed    WorkflowStatus = "ExecutionFailed"    // 执行失败
+	WorkflowStatusFinished           WorkflowStatus = "Finished"           // 完成
 
 	FlowAuditStatusPendingAudit  workflowAuditStatus = "PendingAudit" // 待审核
 	FlowAuditStatusPassed        workflowAuditStatus = "Passed"       // 审核通过
@@ -45,7 +45,7 @@ type Workflow struct {
 	ID              uint             `gorm:"primaryKey;comment:主键ID" json:"id"`
 	Name            string           `gorm:"type:varchar(50);not null;comment:名称" json:"name"`
 	Describe        string           `gorm:"type:varchar(255);not null;comment:描述" json:"describe"`
-	Status          workflowStatus   `gorm:"type:varchar(50);not null;default:'PendingAudit';comment:状态" json:"status"`
+	Status          WorkflowStatus   `gorm:"type:varchar(50);not null;default:'PendingAudit';comment:状态" json:"status"`
 	ProjId          string           `gorm:"type:varchar(20);not null;comment:项目ID" json:"projId"`
 	InstId          string           `gorm:"type:varchar(20);not null;comment:实例ID" json:"instId"`
 	DbName          string           `gorm:"type:varchar(255);not null;comment:数据库名" json:"dbName"`
