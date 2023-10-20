@@ -82,8 +82,19 @@ func WorkflowSelectByList(c *gin.Context) {
 func WorkflowSelectById(c *gin.Context) {
 	var Db = model.Db
 	var workflow model.Workflow
+	workflowId, _ := strconv.Atoi(c.Param("id"))
+
+	userInfo, _ := c.Keys["UserName"]
+	userName := userInfo.(*model.User).UserName
+
+	canQueryDetail := CanQueryWorkflowDetail(workflowId, userName)
+	if !canQueryDetail {
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": "无工单详情查询权限！"})
+		return
+	}
+
 	// 执行查询
-	Db.Where("id = ?", c.Param("id")).Find(&workflow)
+	Db.Where("id = ?", workflowId).Find(&workflow)
 	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": &workflow, "err": ""})
 }
 
@@ -404,6 +415,23 @@ func WorkflowExecuteUpdate(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
 		return
 	}
+
+	userInfo, _ := c.Keys["UserName"]
+	userName := userInfo.(*model.User).UserName
+
+	canExecute := CanExecuteWorkflow(&workflow, userName)
+	if !canExecute {
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": "非提交人，无工单执行权限！"})
+		return
+	}
+
+	var workflowStatus string
+	model.Db.Select("status").Model(&workflow).Where("id = ?", workflow.ID).First(&workflowStatus)
+	if model.WorkflowStatus(workflowStatus) != model.WorkflowStatusPendingExecution {
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": "工单状态不支持执行！"})
+		return
+	}
+
 	// 获取实例信息
 	var instance model.Instance
 	result := model.Db.First(&instance, "inst_id = ?", workflow.InstId)
@@ -471,6 +499,23 @@ func WorkflowScheduledExecutionUpdate(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
 		return
 	}
+
+	userInfo, _ := c.Keys["UserName"]
+	userName := userInfo.(*model.User).UserName
+
+	canExecute := CanExecuteWorkflow(&workflow, userName)
+	if !canExecute {
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": "非提交人，无工单执行权限！"})
+		return
+	}
+
+	var workflowStatus string
+	model.Db.Select("status").Model(&workflow).Where("id = ?", workflow.ID).First(&workflowStatus)
+	if model.WorkflowStatus(workflowStatus) != model.WorkflowStatusPendingExecution {
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": "工单状态不支持执行！"})
+		return
+	}
+
 	result := model.Db.Model(&workflow).Where("id = ?", workflow.ID).Updates(&model.Workflow{
 		Status:      model.WorkflowStatusScheduledExecution,
 		ScheduledAt: workflow.ScheduledAt,
@@ -482,27 +527,22 @@ func WorkflowScheduledExecutionUpdate(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": "", "err": ""})
 }
 
-// ExecuteSQL 执行实例SQL
-func ExecuteSQL(instance *model.Instance, db string, sql string) error {
-	dsn := "%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local&timeout=1s"
-	dsn = fmt.Sprintf(dsn, instance.User, utils.DecryptAES([]byte(config.Conf.General.SecretKey), instance.Password), instance.Ip, instance.Port, db)
-	Db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-	if err != nil {
-		return err
-	}
-	result := Db.Exec(sql)
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
-}
-
 // WorkflowSqlDetailSelectById 查询工单sql审核明细
 func WorkflowSqlDetailSelectById(c *gin.Context) {
 	// 变量初始化
 	pageNo, _ := strconv.Atoi(c.Query("pageNo"))
 	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
 	workflowId, _ := strconv.Atoi(c.Query("workflowId"))
+
+	userInfo, _ := c.Keys["UserName"]
+	userName := userInfo.(*model.User).UserName
+
+	canQueryDetail := CanQueryWorkflowDetail(workflowId, userName)
+	if !canQueryDetail {
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": "无工单详情查询权限！"})
+		return
+	}
+
 	var workflowSqlDetails []model.WorkflowSqlDetail
 	var totalCount int64
 	data := gin.H{"totalCount": 0, "data": &[]model.WorkflowSqlDetail{}, "pageNo": pageNo, "pageSize": pageSize, "totalPage": 0}
@@ -520,6 +560,21 @@ func WorkflowSqlDetailSelectById(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": data, "err": ""})
+}
+
+// ExecuteSQL 执行实例SQL
+func ExecuteSQL(instance *model.Instance, db string, sql string) error {
+	dsn := "%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local&timeout=1s"
+	dsn = fmt.Sprintf(dsn, instance.User, utils.DecryptAES([]byte(config.Conf.General.SecretKey), instance.Password), instance.Ip, instance.Port, db)
+	Db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return err
+	}
+	result := Db.Exec(sql)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }
 
 // CanAddWorkflow 判断用户当前是否可新增
@@ -550,6 +605,32 @@ func CanAuditWorkflow(workflowRecord *model.WorkflowRecord, userName string) boo
 func CanCancelWorkflow(workflow *model.Workflow, userName string) bool {
 	// 工单提交人 = 登录人
 	if workflow.UserName == userName {
+		return true
+	}
+	return false
+}
+
+// CanExecuteWorkflow 判断用户当前是否可执行
+func CanExecuteWorkflow(workflow *model.Workflow, userName string) bool {
+	// 工单提交人 = 登录人
+	if workflow.UserName == userName {
+		return true
+	}
+	return false
+}
+
+// CanQueryWorkflowDetail 判断用户当前是否可查询工单sql详情
+func CanQueryWorkflowDetail(workflowId int, userName string) bool {
+	// 登录人 in （工单提交人，工单审核人）
+	var workflow *model.Workflow
+	model.Db.Model(&model.Workflow{}).Where("id = ?", workflowId).First(&workflow)
+	if workflow.UserName == userName {
+		return true
+	}
+	var countNum int
+	model.Db.Model(&model.WorkflowRecord{}).Select("count(*) as count_num").
+		Where("workflow_id = ? and assignee_user_name = ?", workflowId, userName).First(&countNum)
+	if countNum > 0 {
 		return true
 	}
 	return false
