@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-type workflowAuditStatus string
+type WorkflowAuditStatus string
 type WorkflowStatus string
 type WorkflowSqlAuditStatus string
 type WorkflowSqlAuditLevel string
@@ -26,9 +26,9 @@ const (
 	WorkflowStatusExecutionFailed    WorkflowStatus = "ExecutionFailed"    // 执行失败
 	WorkflowStatusFinished           WorkflowStatus = "Finished"           // 完成
 
-	FlowAuditStatusPendingAudit  workflowAuditStatus = "PendingAudit" // 待审核
-	FlowAuditStatusPassed        workflowAuditStatus = "Passed"       // 审核通过
-	FlowAuditStatusAuditRejected workflowAuditStatus = "Rejected"     // 审核驳回
+	FlowAuditStatusPendingAudit  WorkflowAuditStatus = "PendingAudit" // 待审核
+	FlowAuditStatusPassed        WorkflowAuditStatus = "Passed"       // 审核通过
+	FlowAuditStatusAuditRejected WorkflowAuditStatus = "Rejected"     // 审核驳回
 
 	WorkflowSqlAuditStatusPassed WorkflowSqlAuditStatus = "Passed" // 审核通过
 	WorkflowSqlAuditStatusFailed WorkflowSqlAuditStatus = "Failed" // 审核失败
@@ -87,7 +87,7 @@ type WorkflowRecord struct {
 	AssigneeUserName     string              `gorm:"type:varchar(50);not null;comment:受理用户" json:"assigneeUserName"`
 	HandledAt            sql.NullTime        `gorm:"type:datetime;default null;comment:处理时间" json:"handledAt"`
 	Remarks              string              `gorm:"type:varchar(255);not null;comment:处理结果/备注" json:"remarks"`
-	AuditStatus          workflowAuditStatus `gorm:"type:varchar(50);not null;default:'PendingAudit';comment:状态" json:"auditStatus"`
+	AuditStatus          WorkflowAuditStatus `gorm:"type:varchar(50);not null;default:'PendingAudit';comment:状态" json:"auditStatus"`
 	IsAudit              uint                `gorm:"not null;default:0;comment:审核标识（0：未审核，1：已审核）" json:"isAudit"`
 	CreatedAt            time.Time           `gorm:"type:datetime;not null;default:current_timestamp;comment:创建时间" json:"createdAt"`
 	UpdatedAt            time.Time           `gorm:"type:datetime;not null;default:current_timestamp on update current_timestamp;comment:修改时间" json:"updatedAt"`

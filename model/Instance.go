@@ -22,7 +22,7 @@ type Instance struct {
 	Type               InstType            `gorm:"type:varchar(20);default:'MySQL';not null;comment:实例类型" json:"type"`
 	EnvType            EnvType             `gorm:"type:varchar(20);default:'dev';not null;comment:环境类型" json:"envType"`
 	Role               string              `gorm:"type:enum('Master', 'Slave');default:'Master';not null;comment:实例角色" json:"role"`
-	Ip                 string              `gorm:"type:varchar(20);not null;comment:实例IP" json:"ip"`
+	Ip                 string              `gorm:"type:varchar(255);not null;comment:实例IP" json:"ip"`
 	Port               uint16              `gorm:"not null;comment:实例端口" json:"port"`
 	User               string              `gorm:"type:varchar(50);not null;comment:用户名" json:"user"`
 	Password           string              `gorm:"type:varchar(100);not null;comment:密码" json:"password"`

@@ -29,11 +29,19 @@ type DingWebhook struct {
 	Webhook string
 }
 
+type GoInception struct {
+	Host     string
+	Port     int32
+	User     string
+	Password string
+}
+
 type Config struct {
 	General     General
 	Mysql       Mysql
 	Prometheus  Prometheus
 	DingWebhook DingWebhook
+	GoInception GoInception
 }
 
 var Conf Config

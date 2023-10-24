@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/pingcap/tidb/parser"
-	"github.com/pingcap/tidb/parser/ast"
 	_ "github.com/pingcap/tidb/types/parser_driver"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -129,63 +127,44 @@ func WorkflowInsert(c *gin.Context) {
 		return
 	}
 
+	var plugin plugins.Plugin
 	switch instance.Type {
 	case model.MySQLType:
-		// parser sql
-		p := parser.New()
-		stmtNodes, _, err := p.Parse(workflow.SqlContent, "", "")
-		if err != nil {
-			c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
-			tx.Rollback()
-			return
-		}
-		for _, node := range stmtNodes {
-			println(node.Text())
-			switch node.(type) {
-			case *ast.InsertStmt:
-			case *ast.UpdateStmt:
-			case *ast.DeleteStmt:
-			case *ast.AlterTableStmt:
-			case *ast.CreateTableStmt:
-			case *ast.CreateIndexStmt:
-			default:
-				c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": fmt.Sprintf("不支持的SQL语句：%v", node.Text())})
-				tx.Rollback()
-				return
-			}
-		}
+		plugin = &plugins.MySQLPlugin{Instance: &instance}
 	case model.DorisType:
-		var dp plugins.DorisPlugin
-		result, err := dp.Audit(workflow.SqlContent)
-		if err != nil {
-			c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
-			tx.Rollback()
-			return
-		}
-		for i, auditResult := range result {
-			var workflowSqlDetail model.WorkflowSqlDetail
-			workflowSqlDetail.WorkflowId = workflow.ID
-			workflowSqlDetail.SerialNumber = uint(i + 1)
-			workflowSqlDetail.Statement = auditResult.Statement
-			workflowSqlDetail.AuditStatus = auditResult.AuditStatus
-			workflowSqlDetail.AuditLevel = auditResult.AuditLevel
-			workflowSqlDetail.AuditMsg = auditResult.AuditMsg
-			createRs := tx.Create(&workflowSqlDetail)
-			if createRs.Error != nil {
-				c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
-				tx.Rollback()
-				return
-			}
-			if auditResult.AuditStatus != model.WorkflowSqlAuditStatusPassed {
-				c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": workflowSqlDetail.AuditMsg})
-				tx.Rollback()
-				return
-			}
-		}
+		plugin = &plugins.DorisPlugin{Instance: &instance}
 	default:
 		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": "不支持的数据库类型：" + instance.Type})
 		tx.Rollback()
 		return
+	}
+
+	auditResult, err := plugin.Audit(&workflow)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
+		tx.Rollback()
+		return
+	}
+	for i, ar := range auditResult {
+		var workflowSqlDetail model.WorkflowSqlDetail
+		workflowSqlDetail.WorkflowId = workflow.ID
+		workflowSqlDetail.SerialNumber = uint(i + 1)
+		workflowSqlDetail.Statement = ar.Statement
+		workflowSqlDetail.AuditStatus = ar.AuditStatus
+		workflowSqlDetail.AuditLevel = ar.AuditLevel
+		workflowSqlDetail.AuditMsg = ar.AuditMsg
+		createRs := tx.Create(&workflowSqlDetail)
+		if createRs.Error != nil {
+			c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
+			tx.Rollback()
+			return
+		}
+		if ar.AuditStatus != model.WorkflowSqlAuditStatusPassed ||
+			ar.AuditLevel == model.WorkflowSqlAuditLevelError {
+			c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": workflowSqlDetail.AuditMsg})
+			tx.Rollback()
+			return
+		}
 	}
 
 	// insert WorkflowRecord
@@ -450,44 +429,34 @@ func WorkflowExecuteUpdate(c *gin.Context) {
 		return
 	}
 
-	// 迭代 WorkflowSqlDetail
-	rows, err := model.Db.Model(&model.WorkflowSqlDetail{}).
-		Where("workflow_id = ?", workflow.ID).Order("serial_number asc").Rows()
-	defer rows.Close()
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
-		return
+	var plugin plugins.Plugin
+	switch instance.Type {
+	case model.MySQLType:
+		plugin = &plugins.MySQLPlugin{Instance: &instance}
+	case model.DorisType:
+		plugin = &plugins.DorisPlugin{Instance: &instance}
 	}
-	for rows.Next() {
-		var workflowSqlDetail model.WorkflowSqlDetail
-		model.Db.ScanRows(rows, &workflowSqlDetail)
-		// 执行SQL
-		err := ExecuteSQL(&instance, workflow.DbName, workflowSqlDetail.Statement)
-		if err != nil {
-			// 更新状态 workflowSqlDetail failed
-			model.Db.Model(&workflowSqlDetail).Updates(model.WorkflowSqlDetail{
-				ExecutionStatus: model.WorkflowSqlExecutionStatusFailed,
-				ExecutionMsg:    err.Error(),
-			})
 
+	go func() {
+		err := plugin.Execute(&workflow)
+		if err != nil {
 			// 更新状态 WorkflowStatusExecutionFailed
 			result = model.Db.Model(&workflow).Where("id = ?", workflow.ID).Updates(&model.Workflow{Status: model.WorkflowStatusExecutionFailed})
 			if result.Error != nil {
-				c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error.Error()})
+				// c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error.Error()})
 				return
 			}
-			c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
+			// c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
 			return
 		}
-		// 更新状态 workflowSqlDetail successfully
-		model.Db.Model(&workflowSqlDetail).Updates(model.WorkflowSqlDetail{ExecutionStatus: model.WorkflowSqlExecutionStatusSuccessfully})
-	}
-	// 更新状态 WorkflowStatusFinished
-	result = model.Db.Model(&workflow).Where("id = ?", workflow.ID).Updates(&model.Workflow{Status: model.WorkflowStatusFinished})
-	if result.Error != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error.Error()})
-		return
-	}
+
+		// 更新状态 WorkflowStatusFinished
+		result = model.Db.Model(&workflow).Where("id = ?", workflow.ID).Updates(&model.Workflow{Status: model.WorkflowStatusFinished})
+		if result.Error != nil {
+			c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": result.Error.Error()})
+			return
+		}
+	}()
 	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": "", "err": ""})
 }
 
