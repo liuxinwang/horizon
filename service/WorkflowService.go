@@ -27,6 +27,7 @@ func WorkflowSelectByList(c *gin.Context) {
 	type Workflow struct {
 		model.Workflow
 		InstName string `json:"instName"`
+		EnvType  string `json:"envType"`
 		NickName string `json:"nickName"`
 	}
 	var workflows []Workflow
@@ -55,7 +56,7 @@ func WorkflowSelectByList(c *gin.Context) {
 	Db = Db.Preload("WorkflowRecords", func(db *gorm.DB) *gorm.DB {
 		return db.Order("workflow_records.id asc")
 	}).Preload("WorkflowRecords.User")
-	Db.Select("workflows.*, instances.name as inst_name, users.nick_name").
+	Db.Select("workflows.*, instances.name as inst_name, instances.env_type, users.nick_name").
 		Joins("left join instances on workflows.inst_id = instances.inst_id").
 		Joins("left join users on workflows.user_name = users.user_name").
 		Where("(workflows.user_name = ?", userName).
@@ -79,7 +80,12 @@ func WorkflowSelectByList(c *gin.Context) {
 // WorkflowSelectById 查看工单信息
 func WorkflowSelectById(c *gin.Context) {
 	var Db = model.Db
-	var workflow model.Workflow
+	type Workflow struct {
+		model.Workflow
+		InstName string `json:"instName"`
+		EnvType  string `json:"envType"`
+	}
+	var workflow Workflow
 	workflowId, _ := strconv.Atoi(c.Param("id"))
 
 	userInfo, _ := c.Keys["UserName"]
@@ -92,7 +98,9 @@ func WorkflowSelectById(c *gin.Context) {
 	}
 
 	// 执行查询
-	Db.Where("id = ?", workflowId).Find(&workflow)
+	Db.Select("workflows.*, instances.name as inst_name, instances.env_type").
+		Joins("left join instances on workflows.inst_id = instances.inst_id").
+		Where("workflows.id = ?", workflowId).Find(&workflow)
 	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": &workflow, "err": ""})
 }
 
