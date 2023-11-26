@@ -5,10 +5,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"horizon/handler"
 	"horizon/utils"
-	"io"
 	"log"
 	"net/http"
-	"os"
 )
 
 func InitRouter() *gin.Engine {
@@ -23,12 +21,6 @@ func InitRouter() *gin.Engine {
 }
 
 func InitRouterPack() *gin.Engine {
-	// logo handle
-	// 禁用控制台颜色，将日志写入文件时不需要控制台颜色。
-	gin.DisableConsoleColor()
-	// 记录到文件。
-	f, _ := os.Create("horizon.log")
-	gin.DefaultWriter = io.MultiWriter(f)
 	// init gin
 	r := gin.Default()
 	// index handle

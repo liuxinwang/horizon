@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"horizon/config"
 	"horizon/model"
+	"horizon/utils"
 	"testing"
 )
 
@@ -13,7 +14,8 @@ func TestInspTaskRunning(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	fmt.Println("begin")
-	config.InitConfig()
+	help := utils.HelpInit()
+	config.InitConfig(help.ConfigFile)
 	model.InitDb()
 	m.Run()
 	fmt.Println("end")

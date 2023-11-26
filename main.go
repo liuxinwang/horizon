@@ -4,6 +4,7 @@ import (
 	"embed"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 	"horizon/config"
 	"horizon/model"
 	"horizon/router"
@@ -11,24 +12,24 @@ import (
 	"horizon/utils"
 	"html/template"
 	"io/fs"
-	"log"
 	"net/http"
 )
 
 //go:embed static
 var Static embed.FS
 
-func main() {
-	utils.HelpInit()
-	config.InitConfig()
+func init() {
+	help := utils.HelpInit()
+	config.InitConfig(help.ConfigFile)
+	utils.LogInit()
 	model.InitDb()
+}
+
+func main() {
 	var r *gin.Engine
 	if config.Conf.General.Environment == "dev" {
 		r = router.InitRouter()
 	} else {
-		// prod mode
-		// gin release mode
-		gin.SetMode(gin.ReleaseMode)
 		// init prod router
 		r = router.InitRouterPack()
 		// load frontend
@@ -39,7 +40,7 @@ func main() {
 		r.SetHTMLTemplate(staticTemplate)
 	}
 	tasks.InitTasks()
-	log.Printf(fmt.Sprintf("start horizon in :%d", config.Conf.General.Port))
+	log.Infof("start horizon in :%d", config.Conf.General.Port)
 	err := r.Run(fmt.Sprintf(":%d", config.Conf.General.Port))
 	log.Fatal(err.Error())
 }

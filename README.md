@@ -34,12 +34,14 @@
   - 审计日志
 - SQL审核
   - TODO SQL查询
-  - SQL上线（now only doris）
+  - SQL上线（support type: mysql、doris）
   - TODO 数据导出
   - TODO 安全规则
   - 审批流程
   - TODO 操作审计
-- TODO 数据传输
+- 数据传输
+  - TODO mysql to mysql
+  - TODO mysql to doris | starrocks
 - TODO 数据库备份
 - 系统管理
   - 用户管理

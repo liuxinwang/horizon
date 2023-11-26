@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"github.com/BurntSushi/toml"
 )
 
@@ -36,19 +35,24 @@ type GoInception struct {
 	Password string
 }
 
+type Log struct {
+	Name  string
+	Level string
+}
+
 type Config struct {
 	General     General
 	Mysql       Mysql
 	Prometheus  Prometheus
 	DingWebhook DingWebhook
 	GoInception GoInception
+	Log         Log
 }
 
 var Conf Config
 
-func InitConfig() {
-	if _, err := toml.DecodeFile("conf.toml", &Conf); err != nil {
+func InitConfig(configFile string) {
+	if _, err := toml.DecodeFile(configFile, &Conf); err != nil {
 		panic("ERROR occurred:" + err.Error())
 	}
-	fmt.Printf("%s (%s)\n", Conf.Mysql.User, Conf.Mysql.Password)
 }
