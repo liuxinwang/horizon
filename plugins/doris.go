@@ -76,7 +76,7 @@ func (dp *DorisPlugin) Execute(workflow *model.Workflow) error {
 			// 更新状态 workflowSqlDetail failed
 			model.Db.Model(&workflowSqlDetail).Updates(model.WorkflowSqlDetail{
 				ExecutionStatus: model.WorkflowSqlExecutionStatusFailed,
-				ExecutionMsg:    err.Error(),
+				ExecutionMsg:    result.Error.Error(),
 			})
 			return result.Error
 		}
