@@ -40,6 +40,11 @@ type Log struct {
 	Level string
 }
 
+type Aliyun struct {
+	AccessKeyId     string
+	AccessKeySecret string
+}
+
 type Config struct {
 	General     General
 	Mysql       Mysql
@@ -47,6 +52,7 @@ type Config struct {
 	DingWebhook DingWebhook
 	GoInception GoInception
 	Log         Log
+	Aliyun      Aliyun
 }
 
 var Conf Config

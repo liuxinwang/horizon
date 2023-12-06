@@ -120,4 +120,13 @@ func commonRouter(r *gin.Engine) {
 	workflowTemplate.PUT("edit", handler.WorkflowTemplatePut)
 	workflowTemplate.DELETE("/:id", handler.WorkflowTemplateDelete)
 	workflowTemplate.POST("/config", handler.WorkflowTemplateConfigPost)
+
+	// configCenter group
+	configCenter := api.Group("/configCenter", authMiddleware.MiddlewareFunc())
+	configCenterInstance := configCenter.Group("/instance", authMiddleware.MiddlewareFunc())
+	configCenterInstance.GET("query", handler.ConfigCenterInstanceGet)
+
+	configCenterInstanceConfig := configCenter.Group("/config", authMiddleware.MiddlewareFunc())
+	configCenterInstanceConfig.GET("query", handler.ConfigCenterInstanceConfigGet)
+	configCenterInstanceConfig.GET("detail", handler.ConfigCenterInstanceConfigDataGet)
 }

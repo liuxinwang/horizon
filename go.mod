@@ -4,12 +4,15 @@ go 1.20
 
 require (
 	github.com/BurntSushi/toml v1.3.2
+	github.com/alibabacloud-go/darabonba-openapi/v2 v2.0.5
+	github.com/alibabacloud-go/openapi-util v0.1.0
+	github.com/alibabacloud-go/tea v1.2.1
+	github.com/alibabacloud-go/tea-utils/v2 v2.0.4
 	github.com/appleboy/gin-jwt/v2 v2.8.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-demo/version v0.0.0-20200109120206-2cde9473fd92
 	github.com/json-iterator/go v1.1.12
 	github.com/pingcap/tidb v1.1.0-beta.0.20230808082424-40b72e7a9a4f
-	github.com/pingcap/tidb/parser v0.0.0-20230808082424-40b72e7a9a4f
 	github.com/prometheus/client_golang v1.16.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/shopspring/decimal v1.3.1
@@ -28,9 +31,15 @@ require (
 	github.com/DataDog/go-tuf v0.3.0--fix-localmeta-fork // indirect
 	github.com/DataDog/sketches-go v1.4.1 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
+	github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.4 // indirect
+	github.com/alibabacloud-go/debug v0.0.0-20190504072949-9472017b5c68 // indirect
+	github.com/alibabacloud-go/tea-utils v1.3.1 // indirect
+	github.com/alibabacloud-go/tea-xml v1.1.3 // indirect
+	github.com/aliyun/credentials-go v1.3.1 // indirect
 	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/clbanning/mxj/v2 v2.5.5 // indirect
 	github.com/cloudfoundry/gosigar v1.3.6 // indirect
 	github.com/cockroachdb/errors v1.8.1 // indirect
 	github.com/cockroachdb/logtags v0.0.0-20190617123548-eb05cc24525f // indirect
@@ -85,6 +94,7 @@ require (
 	github.com/pingcap/kvproto v0.0.0-20230728080053-8a9db88bc88a // indirect
 	github.com/pingcap/log v1.1.1-0.20230317032135-a0d097d16e22 // indirect
 	github.com/pingcap/sysutil v1.0.1-0.20230407040306-fb007c5aff21 // indirect
+	github.com/pingcap/tidb/parser v0.0.0-20230808082424-40b72e7a9a4f // indirect
 	github.com/pingcap/tipb v0.0.0-20230607071926-bda24015c2d6 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/power-devops/perfstat v0.0.0-20221212215047-62379fc7944b // indirect
@@ -106,6 +116,7 @@ require (
 	github.com/tikv/client-go/v2 v2.0.8-0.20230731032349-719e6456f7d5 // indirect
 	github.com/tikv/pd/client v0.0.0-20230724080549-de985b8e0afc // indirect
 	github.com/tinylib/msgp v1.1.8 // indirect
+	github.com/tjfoc/gmsm v1.3.2 // indirect
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
 	github.com/tklauser/numcpus v0.6.0 // indirect
 	github.com/twmb/murmur3 v1.1.6 // indirect
