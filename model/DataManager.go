@@ -7,9 +7,9 @@ type DataMigrateJob struct {
 	Name         string    `gorm:"type:varchar(50);not null;comment:任务名称" json:"name"`
 	Describe     string    `gorm:"type:varchar(255);not null;comment:描述" json:"describe"`
 	SourceInstId string    `gorm:"type:varchar(20);not null;comment:源实例ID" json:"sourceInstId"`
-	SourceDb     string    `gorm:"type:varchar(20);not null;comment:源数据库" json:"sourceDb"`
+	SourceDb     string    `gorm:"type:varchar(100);not null;comment:源数据库" json:"sourceDb"`
 	TargetInstId string    `gorm:"type:varchar(20);not null;comment:目的实例ID" json:"targetInstId"`
-	TargetDb     string    `gorm:"type:varchar(20);not null;comment:目的数据库" json:"targetDb"`
+	TargetDb     string    `gorm:"type:varchar(100);not null;comment:目的数据库" json:"targetDb"`
 	Status       string    `gorm:"type:enum('NotStart', 'Running', 'Error', 'Finished');default:'NotStart';not null;comment:任务状态" json:"status"`
 	CreatedAt    time.Time `gorm:"type:datetime;not null;default:current_timestamp;comment:创建时间" json:"createdAt"`
 	UpdatedAt    time.Time `gorm:"type:datetime;not null;default:current_timestamp on update current_timestamp;comment:修改时间" json:"updatedAt"`
@@ -18,7 +18,7 @@ type DataMigrateJob struct {
 type DataMigrateJobDetail struct {
 	ID               uint      `gorm:"primaryKey;comment:主键ID" json:"id"`
 	DataMigrateJobId uint      `gorm:"type:int;comment:迁移任务主键ID" json:"dataMigrateJobId"`
-	TableName        string    `gorm:"type:varchar(50);not null;comment:表名称" json:"tableName"`
+	TableName        string    `gorm:"type:varchar(100);not null;comment:表名称" json:"tableName"`
 	Status           string    `gorm:"type:enum('NotStart', 'Running', 'Error', 'Finished');default:'NotStart';not null;comment:同步状态" json:"status"`
 	EstimateRows     uint      `gorm:"type:int;comment:预估行数" json:"estimateRows"`
 	CompletedRows    uint      `gorm:"type:int;comment:已完成行数" json:"completedRows"`
