@@ -61,7 +61,9 @@ func InitDb() {
 		&WorkflowTemplate{},
 		&WorkflowTemplateDetail{},
 		&WorkflowRecord{},
-		&WorkflowSqlDetail{})
+		&WorkflowSqlDetail{},
+		&DataMigrateJob{},
+		&DataMigrateJobDetail{})
 	if err != nil {
 		log.Fatal(err.Error())
 	}

@@ -74,7 +74,8 @@ func commonRouter(r *gin.Engine) {
 	instance.POST("add", handler.InstancePost)
 	instance.PUT("edit", handler.InstancePut)
 	instance.DELETE("delete/:id", handler.InstanceDelete)
-	instance.GET("db/:instId", handler.InstanceDdGet)
+	instance.GET("db/:instId", handler.InstanceDbGet)
+	instance.GET("db/table", handler.InstanceDbTableGet)
 
 	// inspection group
 	inspection := api.Group("/inspection", authMiddleware.MiddlewareFunc())
@@ -129,4 +130,14 @@ func commonRouter(r *gin.Engine) {
 	configCenterInstanceConfig := configCenter.Group("/config", authMiddleware.MiddlewareFunc())
 	configCenterInstanceConfig.GET("query", handler.ConfigCenterInstanceConfigGet)
 	configCenterInstanceConfig.GET("detail", handler.ConfigCenterInstanceConfigDataGet)
+
+	// dataManger group
+	dataManger := api.Group("/dataManger", authMiddleware.MiddlewareFunc())
+	dataMigrateJob := dataManger.Group("/dataMigrateJob", authMiddleware.MiddlewareFunc())
+	dataMigrateJob.GET("query", handler.DataMigrateJobGet)
+	dataMigrateJob.GET("/:id", handler.DataMigrateJobIdGet)
+	dataMigrateJob.POST("add", handler.DataMigrateJobPost)
+	dataMigrateJob.POST("execute", handler.DataMigrateJobExecutePost)
+	dataMigrateJobDetail := dataManger.Group("/dataMigrateJobDetail", authMiddleware.MiddlewareFunc())
+	dataMigrateJobDetail.GET("query", handler.DataMigrateJobDetailGet)
 }

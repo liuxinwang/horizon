@@ -25,6 +25,10 @@ func InstanceDelete(c *gin.Context) {
 	service.InstanceDelete(c)
 }
 
-func InstanceDdGet(c *gin.Context) {
+func InstanceDbGet(c *gin.Context) {
 	service.InstanceDbSelectByInstId(c)
+}
+
+func InstanceDbTableGet(c *gin.Context) {
+	service.InstanceDbTableSelectByInstIdDb(c)
 }

@@ -9,11 +9,9 @@ import (
 	"horizon/model"
 	"horizon/utils"
 	"math"
-	"math/rand"
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // InstanceSelectByList 查询实例列表
@@ -130,7 +128,7 @@ func InstanceDelete(c *gin.Context) {
 	}
 }
 
-// InstanceDbSelectByInstId 查询列表
+// InstanceDbSelectByInstId 查询实例DB列表
 func InstanceDbSelectByInstId(c *gin.Context) {
 	var instance model.Instance
 	model.Db.Where("inst_id = ?", c.Param("instId")).First(&instance)
@@ -140,6 +138,20 @@ func InstanceDbSelectByInstId(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": &databases, "err": ""})
+}
+
+// InstanceDbTableSelectByInstIdDb 查询实例DB表列表
+func InstanceDbTableSelectByInstIdDb(c *gin.Context) {
+	instId := c.Query("instId")
+	db := c.Query("db")
+	var instance model.Instance
+	model.Db.Where("inst_id = ?", instId).First(&instance)
+	tables, err := getDatabaseTables(&instance, db)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "success", "data": &tables, "err": ""})
 }
 
 // 获取实例状态
@@ -153,16 +165,6 @@ func getStatus(instance *model.Instance) (*gorm.DB, error) {
 		instance.Status = "Running"
 	}
 	return db, err
-}
-
-// 生成实例ID
-func generateId(instance *model.Instance) {
-	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
-	b := make([]rune, 10)
-	for i := range b {
-		b[i] = letterRunes[rand.New(rand.NewSource(time.Now().UnixNano())).Intn(len(letterRunes))]
-	}
-	instance.InstId = "mysql-" + string(b)
 }
 
 // 获取实例版本
@@ -199,5 +201,23 @@ func getDatabases(instance *model.Instance) (interface{}, error) {
 	Db.Raw("SELECT SCHEMA_NAME as name " +
 		"FROM SCHEMATA " +
 		"WHERE SCHEMA_NAME NOT IN ('information_schema', 'mysql', 'performance_schema' , '')").Scan(&results)
+	return results, nil
+}
+
+// 获取实例数据库表
+func getDatabaseTables(instance *model.Instance, db string) (interface{}, error) {
+	dsn := "%s:%s@tcp(%s:%d)/information_schema?charset=utf8mb4&parseTime=True&loc=Local&timeout=1s"
+	dsn = fmt.Sprintf(dsn, instance.User, utils.DecryptAES([]byte(config.Conf.General.SecretKey), instance.Password), instance.Ip, instance.Port)
+	Db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return nil, err
+	}
+	type result struct {
+		TableName string `json:"tableName"`
+	}
+	var results []result
+	Db.Raw("SELECT TABLE_NAME as table_name "+
+		"FROM TABLES "+
+		"WHERE TABLE_SCHEMA = ? ", db).Scan(&results)
 	return results, nil
 }

@@ -15,6 +15,7 @@ type WorkflowStatus string
 type WorkflowSqlAuditStatus string
 type WorkflowSqlAuditLevel string
 type WorkflowSqlExecutionStatus string
+type WorkflowType string
 
 const (
 	WorkflowStatusPendingAudit       WorkflowStatus = "PendingAudit"       // 待审核
@@ -39,6 +40,9 @@ const (
 
 	WorkflowSqlExecutionStatusFailed       WorkflowSqlExecutionStatus = "Failed"       // 执行失败
 	WorkflowSqlExecutionStatusSuccessfully WorkflowSqlExecutionStatus = "Successfully" // 执行成功
+
+	SqlAuditType    WorkflowType = "SqlAudit"
+	DataMigrateType WorkflowType = "DataMigrate"
 )
 
 type Workflow struct {
@@ -49,6 +53,7 @@ type Workflow struct {
 	ProjId          string           `gorm:"type:varchar(20);not null;comment:项目ID" json:"projId"`
 	InstId          string           `gorm:"type:varchar(20);not null;comment:实例ID" json:"instId"`
 	DbName          string           `gorm:"type:varchar(255);not null;comment:数据库名" json:"dbName"`
+	Type            WorkflowType     `gorm:"type:varchar(20);default:'SqlAudit';not null;comment:工单类型" json:"type"`
 	SqlContent      string           `gorm:"type:text;not null;comment:SQL内容" json:"sqlContent"`
 	UserName        string           `gorm:"type:varchar(50);not null;comment:用户名" json:"userName"`
 	ScheduledAt     *time.Time       `gorm:"type:datetime;default null;comment:定时调度时间" json:"scheduledAt"`
