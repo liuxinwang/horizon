@@ -273,6 +273,53 @@ func executeJob(dataMigrateJob model.DataMigrateJob, sourceInstance model.Instan
 			Status: "Running",
 		})
 
+		nowTime := time.Now().Format("20060102150405")
+		// rename target table
+		renameSql := fmt.Sprintf("rename table %s to %s_backup%s",
+			dataMigrateJobDetail.TableName,
+			dataMigrateJobDetail.TableName,
+			nowTime)
+		renameResult := targetDbConn.Exec(renameSql)
+		if renameResult.Error != nil {
+			// 更新状态  Error
+			model.Db.Model(&dataMigrateJobDetail).Updates(model.DataMigrateJobDetail{
+				Status:   "Error",
+				ErrorMsg: renameResult.Error.Error(),
+			})
+			if rsError == nil {
+				rsError = renameResult.Error // 返回首次异常
+			}
+			continue
+		}
+		// get source table ddl
+		createDdlMap := map[string]interface{}{}
+		getDdlSql := fmt.Sprintf("show create table %s", dataMigrateJobDetail.TableName)
+		getDdlResult := sourceDbConn.Raw(getDdlSql).Scan(&createDdlMap)
+		if getDdlResult.Error != nil {
+			// 更新状态  Error
+			model.Db.Model(&dataMigrateJobDetail).Updates(model.DataMigrateJobDetail{
+				Status:   "Error",
+				ErrorMsg: getDdlResult.Error.Error(),
+			})
+			if rsError == nil {
+				rsError = getDdlResult.Error // 返回首次异常
+			}
+			continue
+		}
+		// create target table
+		createDdlResult := targetDbConn.Exec(fmt.Sprintf("%v", createDdlMap["Create Table"]))
+		if createDdlResult.Error != nil {
+			// 更新状态  Error
+			model.Db.Model(&dataMigrateJobDetail).Updates(model.DataMigrateJobDetail{
+				Status:   "Error",
+				ErrorMsg: createDdlResult.Error.Error(),
+			})
+			if rsError == nil {
+				rsError = createDdlResult.Error // 返回首次异常
+			}
+			continue
+		}
+
 		var (
 			tx           = sourceDbConn.Order(columnNames[0]).Session(&gorm.Session{})
 			queryDB      = tx
