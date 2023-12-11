@@ -75,6 +75,10 @@ func DataMigrateJobInsert(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "fail", "data": "", "err": err.Error()})
 		return
 	}
+
+	userInfo, _ := c.Keys["UserName"]
+	tDataMigrateJob.UserName = userInfo.(*model.User).UserName
+
 	// 获取实例环境类型
 	var sourceInstance model.Instance
 	sourceInstance.InstId = tDataMigrateJob.SourceInstId
