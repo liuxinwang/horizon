@@ -278,23 +278,46 @@ func executeJob(dataMigrateJob model.DataMigrateJob, sourceInstance model.Instan
 		})
 
 		nowTime := time.Now().Format("20060102150405")
-		// rename target table
-		renameSql := fmt.Sprintf("rename table %s to %s_backup%s",
-			dataMigrateJobDetail.TableName,
-			dataMigrateJobDetail.TableName,
-			nowTime)
-		renameResult := targetDbConn.Exec(renameSql)
-		if renameResult.Error != nil {
+
+		// query target table is exists
+		targetTableIsExists := 0
+		targetTableResult := targetDbConn.Raw("select count(*) as source_table_is_exists "+
+			"from information_schema.tables where table_schema = ? and table_name = ?",
+			dataMigrateJob.TargetDb,
+			dataMigrateJobDetail.TableName).Scan(&targetTableIsExists)
+		if targetTableResult.Error != nil {
 			// 更新状态  Error
 			model.Db.Model(&dataMigrateJobDetail).Updates(model.DataMigrateJobDetail{
 				Status:   "Error",
-				ErrorMsg: renameResult.Error.Error(),
+				ErrorMsg: targetTableResult.Error.Error(),
 			})
 			if rsError == nil {
-				rsError = renameResult.Error // 返回首次异常
+				rsError = targetTableResult.Error // 返回首次异常
 			}
 			continue
 		}
+
+		// if source table exists and rename target table
+		if targetTableIsExists == 1 {
+			// rename target table
+			renameSql := fmt.Sprintf("rename table %s to %s_backup%s",
+				dataMigrateJobDetail.TableName,
+				dataMigrateJobDetail.TableName,
+				nowTime)
+			renameResult := targetDbConn.Exec(renameSql)
+			if renameResult.Error != nil {
+				// 更新状态  Error
+				model.Db.Model(&dataMigrateJobDetail).Updates(model.DataMigrateJobDetail{
+					Status:   "Error",
+					ErrorMsg: renameResult.Error.Error(),
+				})
+				if rsError == nil {
+					rsError = renameResult.Error // 返回首次异常
+				}
+				continue
+			}
+		}
+
 		// get source table ddl
 		createDdlMap := map[string]interface{}{}
 		getDdlSql := fmt.Sprintf("show create table %s", dataMigrateJobDetail.TableName)
