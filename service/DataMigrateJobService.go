@@ -233,7 +233,7 @@ func executeJob(dataMigrateJob model.DataMigrateJob, sourceInstance model.Instan
 	// update detail status
 	// 迭代 WorkflowSqlDetail
 	tableRows, err := model.Db.Model(&model.DataMigrateJobDetail{}).
-		Where("data_migrate_job_id = ?", dataMigrateJob.ID).Order("created_at asc").Rows()
+		Where("data_migrate_job_id = ?", dataMigrateJob.ID).Order("id asc").Rows()
 	defer tableRows.Close()
 	if err != nil {
 		return err
@@ -361,11 +361,6 @@ func executeJob(dataMigrateJob model.DataMigrateJob, sourceInstance model.Instan
 			queryResult := queryDB.Table(dataMigrateJobDetail.TableName).Debug().Limit(batchSize).Find(&results)
 			rowsAffected += queryResult.RowsAffected
 			batch++
-
-			for _, rs := range results {
-				// 批量处理找到的记录
-				fmt.Println(rs)
-			}
 
 			if queryResult.Error != nil {
 				// 更新状态  Error
