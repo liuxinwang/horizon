@@ -192,7 +192,9 @@ func iterNode(node *yaml.Node, flag *int) {
 			iterNode(n, flag)
 		}
 	} else {
-		if node.Value == "password" || node.Value == "appSecret" {
+		if node.Value == "password" ||
+			node.Value == "appSecret" ||
+			strings.Contains(strings.ToLower(node.Value), "secret") {
 			*flag = 1
 			return
 		}
